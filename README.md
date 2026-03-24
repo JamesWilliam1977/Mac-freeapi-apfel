@@ -166,6 +166,10 @@ $ apfel -o json --chat
 {"content":"4.","model":"apple-foundationmodel","role":"assistant"}
 ```
 
+### 50 more examples
+
+See **[EXAMPLES.md](EXAMPLES.md)** for 50 real prompts that challenge the model: philosophy, security, coding, logic puzzles, creative writing, translation, forced choices, and edge cases — with unedited outputs and commentary.
+
 ### Compose with other tools
 
 ```bash
