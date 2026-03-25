@@ -9,7 +9,7 @@
 
 **Apple Intelligence from the command line.**
 
-A single-file Swift CLI that talks to Apple's language model via the [FoundationModels](https://developer.apple.com/documentation/foundationmodels) framework. No API keys. No dependencies. No cost. Runs on your Mac's Neural Engine.
+A Swift CLI + OpenAI-compatible API server for Apple's [FoundationModels](https://developer.apple.com/documentation/foundationmodels) framework. No API keys. No cost. Runs on your Mac's Neural Engine. Works with any OpenAI client.
 
 ```
 $ apfel "What is the capital of Austria?"
@@ -22,7 +22,7 @@ The capital of Austria is Vienna.
 
 macOS 26 ships with a built-in language model — the same one behind Writing Tools, Mail summaries, and Siri. Apple exposed it through the `FoundationModels` framework, but only for Swift apps with Xcode.
 
-`apfel` puts that model on your command line. One binary. ~540 lines of well-documented Swift. ~150KB.
+`apfel` puts that model on your command line — and serves it as an OpenAI-compatible API. CLI + server in one binary.
 
 Most queries run on your Mac's Neural Engine with zero network traffic. For complex tasks, Apple's framework may route requests to [Private Cloud Compute](https://security.apple.com/blog/private-cloud-compute/) — Apple's end-to-end encrypted server infrastructure where data is never stored, never logged, and never accessible to Apple. Either way: no API keys, no accounts, no cost.
 
@@ -169,6 +169,85 @@ $ apfel -o json --chat
 ### 50 more examples
 
 See **[EXAMPLES.md](EXAMPLES.md)** for 50 real prompts that challenge the model: philosophy, security, coding, logic puzzles, creative writing, translation, forced choices, and edge cases — with unedited outputs and commentary.
+
+## Server Mode (OpenAI-Compatible API)
+
+Start an OpenAI-compatible HTTP server with one command:
+
+```bash
+$ apfel --serve
+apfel server v0.2.0
+├ endpoint: http://127.0.0.1:11434
+├ model:    apple-foundationmodel
+├ cors:     disabled
+├ max concurrent: 5
+├ debug:    off
+└ ready
+```
+
+### Use with any OpenAI client
+
+**Python:**
+
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:11434/v1", api_key="unused")
+r = client.chat.completions.create(
+    model="apple-foundationmodel",
+    messages=[{"role": "user", "content": "What is 2+2?"}]
+)
+print(r.choices[0].message.content)  # "Four."
+```
+
+**curl:**
+
+```bash
+curl -X POST http://localhost:11434/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"apple","messages":[{"role":"user","content":"Hello"}]}'
+```
+
+**Streaming:**
+
+```bash
+curl -N http://localhost:11434/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"apple","messages":[{"role":"user","content":"Hello"}],"stream":true}'
+```
+
+### Server endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/v1/chat/completions` | Chat completion (streaming + non-streaming) |
+| GET | `/v1/models` | List available models |
+| GET | `/v1/logs` | Query request logs (filter by status, path, time) |
+| GET | `/v1/logs/stats` | Server stats (uptime, RPM, errors, active requests) |
+| GET | `/health` | Health check |
+
+### Server options
+
+```
+--serve              Start the server (default: 127.0.0.1:11434)
+--port <number>      Custom port [default: 11434]
+--host 0.0.0.0       Bind to all interfaces (LAN access)
+--cors               Enable CORS headers for browser clients
+--max-concurrent <n> Max concurrent model requests [default: 5]
+--debug              Verbose logging with full request/response bodies
+```
+
+### Monitoring
+
+```bash
+# Request logs
+curl http://localhost:11434/v1/logs
+curl http://localhost:11434/v1/logs?status=500
+curl http://localhost:11434/v1/logs?errors=true&limit=10
+
+# Server stats
+curl http://localhost:11434/v1/logs/stats
+```
 
 ### Compose with other tools
 
