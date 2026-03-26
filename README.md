@@ -11,7 +11,7 @@ No API keys. No cloud. No model downloads. Runs entirely on your Mac.
 
 ## What is this
 
-Every Mac with Apple Silicon has a **built-in LLM** — Apple's on-device foundation model, shipped as part of Apple Intelligence. Apple provides the [`FoundationModels` framework](https://developer.apple.com/documentation/foundationmodels) (macOS 26+) to access it, but only exposes it through Siri and system features. **apfel wraps it** in a CLI, an HTTP server, and a debug GUI — so you can actually use it. All inference runs **on-device**, no network calls.
+Every Mac with Apple Silicon has a **built-in LLM** — Apple's on-device foundation model, shipped as part of Apple Intelligence. Apple provides the [FoundationModels framework](https://developer.apple.com/documentation/foundationmodels) (macOS 26+) to access it, but only exposes it through Siri and system features. **apfel wraps it** in a CLI, an HTTP server, and a debug GUI — so you can actually use it. All inference runs **on-device**, no network calls.
 
 - **UNIX tool** — `echo "summarize this" | apfel` — pipe-friendly, JSON output, exit codes, env vars
 - **OpenAI-compatible server** — `apfel --serve` — drop-in replacement at `localhost:11434`, works with any OpenAI SDK
