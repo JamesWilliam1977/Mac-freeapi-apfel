@@ -92,7 +92,8 @@ func handleChatCompletion(_ request: Request, context: some RequestContext) asyn
             messages: chatRequest.messages,
             tools: chatRequest.tools,
             options: sessionOpts,
-            jsonMode: jsonMode
+            jsonMode: jsonMode,
+            toolChoice: chatRequest.tool_choice
         )
     } catch {
         let classified = ApfelError.classify(error)
@@ -105,19 +106,22 @@ func handleChatCompletion(_ request: Request, context: some RequestContext) asyn
     events.append("context built history=\(max(0, chatRequest.messages.count - 1)) final_prompt_chars=\(finalPrompt.count)")
 
     let genOpts = makeGenerationOptions(sessionOpts)
+    let promptTokens = await TokenCounter.shared.count(
+        entries: sessionInputEntries(session, finalPrompt: finalPrompt, options: sessionOpts)
+    )
     let requestId = "chatcmpl-\(UUID().uuidString.prefix(12).lowercased())"
     let created = Int(Date().timeIntervalSince1970)
 
     if chatRequest.stream == true {
         let result = streamingResponse(session: session, prompt: finalPrompt,
                                        id: requestId, created: created,
-                                       genOpts: genOpts,
+                                       genOpts: genOpts, promptTokens: promptTokens,
                                        requestBody: requestBodyString, events: events)
         return (result.response, result.trace)
     } else {
         let result = try await nonStreamingResponse(session: session, prompt: finalPrompt,
                                                      id: requestId, created: created,
-                                                     genOpts: genOpts,
+                                                     genOpts: genOpts, promptTokens: promptTokens,
                                                      requestBody: requestBodyString, events: events)
         return (result.response, result.trace)
     }
@@ -131,6 +135,7 @@ private func nonStreamingResponse(
     id: String,
     created: Int,
     genOpts: GenerationOptions,
+    promptTokens: Int,
     requestBody: String,
     events: [String]
 ) async throws -> (response: Response, trace: ChatRequestTrace) {
@@ -163,7 +168,6 @@ private func nonStreamingResponse(
         finishReason = "stop"  // may be overridden below
     }
 
-    let promptTokens = await TokenCounter.shared.count(prompt)
     let completionTokens = await TokenCounter.shared.count(content)
 
     // Detect truncation: if max_tokens was set and response hit the limit
@@ -209,6 +213,7 @@ private func streamingResponse(
     id: String,
     created: Int,
     genOpts: GenerationOptions,
+    promptTokens: Int,
     requestBody: String,
     events: [String]
 ) -> (response: Response, trace: ChatRequestTrace) {
@@ -288,7 +293,6 @@ private func streamingResponse(
                 }
 
                 // Emit usage stats before [DONE] (OpenAI stream_options pattern)
-                let promptTokens = await TokenCounter.shared.count(prompt)
                 let completionTokens = await TokenCounter.shared.count(prev)
                 let usageLine = "data: {\"usage\":{\"prompt_tokens\":\(promptTokens),\"completion_tokens\":\(completionTokens),\"total_tokens\":\(promptTokens + completionTokens)}}\n\n"
                 responseLines.append(usageLine.trimmingCharacters(in: .whitespacesAndNewlines))
@@ -334,7 +338,7 @@ private func streamingResponse(
         Response(status: .ok, headers: headers, body: .init(asyncSequence: responseStream)),
         ChatRequestTrace(
             stream: true,
-            estimatedTokens: max(1, prompt.count / 4),
+            estimatedTokens: promptTokens,
             error: nil,
             requestBody: truncateForLog(requestBody),
             responseBody: "Streaming response in progress. See /v1/chat/completions/stream log for final SSE transcript.",

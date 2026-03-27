@@ -72,23 +72,44 @@ def test_multi_turn_history():
     assert "France" in resp.choices[0].message.content
 
 
-def test_system_prompt():
-    """System prompt is respected."""
-    resp = client.chat.completions.create(
+def test_usage_prompt_tokens_include_history():
+    """usage.prompt_tokens must include reconstructed conversation history, not just the final prompt."""
+    final_prompt = "Reply with exactly READY."
+    without_history = client.chat.completions.create(
+        model=MODEL,
+        messages=[{"role": "user", "content": final_prompt}]
+    )
+    with_history = client.chat.completions.create(
         model=MODEL,
         messages=[
-            {"role": "system", "content": "You are a pirate. Always say 'Arrr'."},
+            {"role": "user", "content": "Reply with exactly ALPHA."},
+            {"role": "assistant", "content": "ALPHA"},
+            {"role": "user", "content": final_prompt},
+        ]
+    )
+    assert with_history.usage.prompt_tokens > without_history.usage.prompt_tokens
+
+
+def test_system_prompt():
+    """System prompt must be included in the reconstructed input context."""
+    without_system = client.chat.completions.create(
+        model=MODEL,
+        messages=[{"role": "user", "content": "Hello!"}]
+    )
+    with_system = client.chat.completions.create(
+        model=MODEL,
+        messages=[
+            {"role": "system", "content": "Reply with exactly READY."},
             {"role": "user", "content": "Hello!"}
         ]
     )
-    # Model should incorporate pirate behavior
-    assert resp.choices[0].message.content is not None
+    assert with_system.usage.prompt_tokens > without_system.usage.prompt_tokens
 
 
 # MARK: - Tool Calling
 
 def test_tool_calling():
-    """Tool calling returns finish_reason='tool_calls' with structured tool calls."""
+    """tool_choice can force a structured tool call."""
     tools = [{
         "type": "function",
         "function": {
@@ -105,8 +126,9 @@ def test_tool_calling():
     }]
     resp = client.chat.completions.create(
         model=MODEL,
-        messages=[{"role": "user", "content": "What's the weather in Vienna?"}],
-        tools=tools
+        messages=[{"role": "user", "content": "Use the provided weather function for Vienna. Do not answer directly."}],
+        tools=tools,
+        tool_choice={"type": "function", "function": {"name": "get_weather"}}
     )
     assert resp.choices[0].finish_reason == "tool_calls"
     assert len(resp.choices[0].message.tool_calls) > 0

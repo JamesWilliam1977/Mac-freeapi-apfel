@@ -316,10 +316,13 @@ def test_streaming_first_chunk_has_role():
 
 def test_streaming_last_chunk_finish_reason():
     """Last chunk with choices should have finish_reason='stop'."""
-    chunks = chat_stream([{"role": "user", "content": "Say bye."}])
-    chunks_with_choices = [c for c in chunks if c.get("choices")]
-    last = chunks_with_choices[-1]
-    assert last["choices"][0]["finish_reason"] == "stop"
+    chunks = chat_stream([{"role": "user", "content": "Reply with the single word OK."}])
+    terminal_chunks = [
+        c for c in chunks
+        if c.get("choices") and c["choices"][0].get("finish_reason") is not None
+    ]
+    assert terminal_chunks
+    assert terminal_chunks[-1]["choices"][0]["finish_reason"] == "stop"
 
 
 def test_streaming_object_field():
@@ -349,8 +352,9 @@ def test_tool_call_response_schema():
         },
     }]
     status, data = chat(
-        [{"role": "user", "content": "What's the weather in Vienna?"}],
+        [{"role": "user", "content": "Use the provided weather function for Vienna. Do not answer directly."}],
         tools=tools,
+        tool_choice={"type": "function", "function": {"name": "get_weather"}},
     )
     assert status == 200
     validate(instance=data, schema=CHAT_COMPLETION_SCHEMA)

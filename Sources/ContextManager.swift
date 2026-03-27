@@ -29,9 +29,16 @@ enum ContextManager {
         messages: [OpenAIMessage],
         tools: [OpenAITool]?,
         options: SessionOptions,
-        jsonMode: Bool = false
+        jsonMode: Bool = false,
+        toolChoice: ToolChoice? = nil
     ) async throws -> (session: LanguageModelSession, finalPrompt: String) {
         let conversation = messages.filter { $0.role != "system" }
+        let effectiveTools: [OpenAITool]?
+        if case .some(.none) = toolChoice {
+            effectiveTools = nil
+        } else {
+            effectiveTools = tools
+        }
 
         // When last message is role:"tool", the model should respond using the tool result.
         // We put all messages (including the tool result) into history and use a
@@ -53,7 +60,7 @@ enum ContextManager {
         // Convert tools: native ToolDefinitions + text fallback for failures
         var nativeToolDefs: [Transcript.ToolDefinition] = []
         var fallbackTools: [ToolDef] = []
-        if let tools = tools, !tools.isEmpty {
+        if let tools = effectiveTools, !tools.isEmpty {
             let converted = SchemaConverter.convert(tools: tools)
             nativeToolDefs = converted.native
             fallbackTools = converted.fallback
@@ -62,31 +69,14 @@ enum ContextManager {
         // Build instruction text
         let instrText = buildInstructions(
             messages: messages,
-            tools: tools,
+            tools: effectiveTools,
             fallbackTools: fallbackTools,
-            jsonMode: jsonMode
+            jsonMode: jsonMode,
+            toolChoice: toolChoice
         )
 
-        // Budget-aware history: count tokens and keep newest messages that fit
-        let tc = TokenCounter.shared
-        let budget = await tc.inputBudget(reservedForOutput: 512)
-        var usedTokens = await tc.count(finalPrompt)
-        if !instrText.isEmpty {
-            usedTokens += await tc.count(instrText)
-        }
-
-        // Walk history newest-first, keep messages that fit within budget
-        var keptHistory: [OpenAIMessage] = []
-        for msg in history.reversed() {
-            let text = msg.textContent ?? msg.tool_call_id ?? ""
-            let tokens = await tc.count(text)
-            if usedTokens + tokens > budget { break }
-            usedTokens += tokens
-            keptHistory.insert(msg, at: 0)
-        }
-
         // Build transcript entries
-        var entries: [Transcript.Entry] = []
+        var baseEntries: [Transcript.Entry] = []
 
         // Instructions with native tool definitions
         if !instrText.isEmpty || !nativeToolDefs.isEmpty {
@@ -94,59 +84,22 @@ enum ContextManager {
                 .text(Transcript.TextSegment(content: instrText))
             ]
             let instr = Transcript.Instructions(segments: segments, toolDefinitions: nativeToolDefs)
-            entries.append(.instructions(instr))
+            baseEntries.append(.instructions(instr))
         }
 
-        // History entries
-        for msg in keptHistory {
-            switch msg.role {
-            case "user":
-                if let text = msg.textContent {
-                    let seg = Transcript.TextSegment(content: text)
-                    let genOpts = makeGenerationOptions(options)
-                    let prompt = Transcript.Prompt(segments: [.text(seg)], options: genOpts)
-                    entries.append(.prompt(prompt))
-                }
-            case "assistant":
-                if let calls = msg.tool_calls, !calls.isEmpty {
-                    // Native ToolCalls entry — semantically correct
-                    let transcriptCalls = calls.map { call in
-                        let args = SchemaConverter.makeArguments(call.function.arguments)
-                        return Transcript.ToolCall(
-                            id: call.id,
-                            toolName: call.function.name,
-                            arguments: args
-                        )
-                    }
-                    let toolCalls = Transcript.ToolCalls(transcriptCalls)
-                    entries.append(.toolCalls(toolCalls))
-                } else {
-                    let text = msg.textContent ?? ""
-                    let seg = Transcript.TextSegment(content: text)
-                    let resp = Transcript.Response(assetIDs: [], segments: [.text(seg)])
-                    entries.append(.response(resp))
-                }
-            case "tool":
-                let text = msg.textContent ?? ""
-                let seg = Transcript.TextSegment(content: text)
-                let output = Transcript.ToolOutput(
-                    id: msg.tool_call_id ?? UUID().uuidString,
-                    toolName: msg.name ?? "tool",
-                    segments: [.text(seg)]
-                )
-                entries.append(.toolOutput(output))
-            default:
-                break
-            }
+        let historyEntries = history.compactMap { historyEntry(for: $0, options: options) }
+        let finalPromptEntry = makePromptEntry(finalPrompt, options: options)
+        let budget = await TokenCounter.shared.inputBudget(reservedForOutput: 512)
+        guard let entries = await trimHistoryEntriesToBudget(
+            baseEntries: baseEntries,
+            historyEntries: historyEntries,
+            finalEntry: finalPromptEntry,
+            budget: budget
+        ) else {
+            throw ApfelError.contextOverflow
         }
 
-        let session: LanguageModelSession
-        if entries.isEmpty {
-            session = LanguageModelSession(model: model)
-        } else {
-            let transcript = Transcript(entries: entries)
-            session = LanguageModelSession(model: model, transcript: transcript)
-        }
+        let session = makeTranscriptSession(model: model, entries: entries)
         return (session, finalPrompt)
     }
 
@@ -156,7 +109,8 @@ enum ContextManager {
         messages: [OpenAIMessage],
         tools: [OpenAITool]?,
         fallbackTools: [ToolDef],
-        jsonMode: Bool
+        jsonMode: Bool,
+        toolChoice: ToolChoice?
     ) -> String {
         var parts: [String] = []
 
@@ -170,10 +124,22 @@ enum ContextManager {
             parts.append(sys)
         }
 
+        if case .some(.none) = toolChoice {
+            parts.append("Do not call any tools. Respond with plain text only.")
+        }
+
         // Tool output format instructions (always needed when tools are present)
         if let tools = tools, !tools.isEmpty {
             let names = tools.map(\.function.name)
             parts.append(ToolCallHandler.buildOutputFormatInstructions(toolNames: names))
+            switch toolChoice {
+            case .some(.required):
+                parts.append("You must call one of the available functions in your next response. Do not answer with plain text.")
+            case .some(.specific(let name)):
+                parts.append("You must call the function \(name) in your next response. Do not answer with plain text.")
+            default:
+                break
+            }
         }
 
         // Text fallback for tools that failed native conversion
@@ -182,5 +148,45 @@ enum ContextManager {
         }
 
         return parts.joined(separator: "\n\n")
+    }
+
+    private static func historyEntry(
+        for message: OpenAIMessage,
+        options: SessionOptions
+    ) -> Transcript.Entry? {
+        switch message.role {
+        case "user":
+            guard let text = message.textContent else { return nil }
+            return makePromptEntry(text, options: options)
+
+        case "assistant":
+            if let calls = message.tool_calls, !calls.isEmpty {
+                let transcriptCalls = calls.map { call in
+                    Transcript.ToolCall(
+                        id: call.id,
+                        toolName: call.function.name,
+                        arguments: SchemaConverter.makeArguments(call.function.arguments)
+                    )
+                }
+                return .toolCalls(Transcript.ToolCalls(transcriptCalls))
+            }
+
+            let text = message.textContent ?? ""
+            let segment = Transcript.TextSegment(content: text)
+            return .response(Transcript.Response(assetIDs: [], segments: [.text(segment)]))
+
+        case "tool":
+            let text = message.textContent ?? ""
+            let segment = Transcript.TextSegment(content: text)
+            let output = Transcript.ToolOutput(
+                id: message.tool_call_id ?? UUID().uuidString,
+                toolName: message.name ?? "tool",
+                segments: [.text(segment)]
+            )
+            return .toolOutput(output)
+
+        default:
+            return nil
+        }
     }
 }

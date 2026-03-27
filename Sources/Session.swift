@@ -6,6 +6,7 @@
 
 import FoundationModels
 import Foundation
+import ApfelCore
 
 // MARK: - Session Options
 
@@ -48,6 +49,61 @@ func makeModel(permissive: Bool) -> SystemLanguageModel {
 func makeSession(systemPrompt: String?, options: SessionOptions = .defaults) -> LanguageModelSession {
     let model = makeModel(permissive: options.permissive)
     return LanguageModelSession(model: model, instructions: systemPrompt)
+}
+
+func makePromptEntry(_ prompt: String, options: SessionOptions = .defaults) -> Transcript.Entry {
+    let segment = Transcript.TextSegment(content: prompt)
+    let prompt = Transcript.Prompt(
+        segments: [.text(segment)],
+        options: makeGenerationOptions(options)
+    )
+    return .prompt(prompt)
+}
+
+func makeTranscriptSession(model: SystemLanguageModel, entries: [Transcript.Entry]) -> LanguageModelSession {
+    guard !entries.isEmpty else {
+        return LanguageModelSession(model: model)
+    }
+    return LanguageModelSession(model: model, transcript: Transcript(entries: entries))
+}
+
+func sessionInputEntries(
+    _ session: LanguageModelSession,
+    finalPrompt: String,
+    options: SessionOptions = .defaults
+) -> [Transcript.Entry] {
+    Array(Array(session.transcript)) + [makePromptEntry(finalPrompt, options: options)]
+}
+
+func trimHistoryEntriesToBudget(
+    baseEntries: [Transcript.Entry],
+    historyEntries: [Transcript.Entry],
+    finalEntry: Transcript.Entry? = nil,
+    budget: Int
+) async -> [Transcript.Entry]? {
+    var requiredEntries = baseEntries
+    if let finalEntry {
+        requiredEntries.append(finalEntry)
+    }
+    guard await TokenCounter.shared.count(entries: requiredEntries) <= budget else {
+        return nil
+    }
+
+    var keptHistory: [Transcript.Entry] = []
+    for entry in historyEntries.reversed() {
+        var candidate = baseEntries
+        candidate.append(entry)
+        candidate.append(contentsOf: keptHistory)
+        if let finalEntry {
+            candidate.append(finalEntry)
+        }
+        if await TokenCounter.shared.count(entries: candidate) > budget {
+            break
+        }
+        keptHistory.insert(entry, at: 0)
+    }
+
+    return baseEntries + keptHistory
 }
 
 // MARK: - Streaming Helper

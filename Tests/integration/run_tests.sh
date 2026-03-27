@@ -25,7 +25,7 @@ python3 -m pytest Tests/integration/openai_client_test.py Tests/integration/open
 TEST_EXIT=$?
 
 echo "Stopping server..."
-kill $SERVER_PID 2>/dev/null
-wait $SERVER_PID 2>/dev/null
+kill $SERVER_PID 2>/dev/null || true
+wait $SERVER_PID 2>/dev/null || true
 
 exit $TEST_EXIT
