@@ -30,7 +30,7 @@ Every Mac with Apple Silicon has a **built-in LLM** - Apple's on-device foundati
 | Requirement | Details |
 |-------------|---------|
 | **Mac** | Apple Silicon (M1 or later) |
-| **macOS** | **macOS 26.4+** recommended (26.0 minimum, but 26.4 adds real token counting) |
+| **macOS** | **macOS 26.4** or later |
 | **Apple Intelligence** | Must be [enabled in System Settings](https://support.apple.com/en-us/108380) |
 | **Swift** | Swift 6.2+ (comes with Command Line Tools) |
 | **Xcode** | **NOT required** - Command Line Tools only |
@@ -159,6 +159,24 @@ demo/cmd "find all .log files modified today"
 
 demo/cmd -x "show disk usage sorted by size"   # -x = execute after confirm
 demo/cmd -c "list open ports"                   # -c = copy to clipboard
+```
+
+**One-liner version** - add to your `.zshrc` and use `ai` from anywhere:
+
+```bash
+ai() { r=$(apfel -q -s 'Reply ONLY with a shell command. No markdown, no explanation.' "$*" | sed '/^```/d;s/^[[:space:]]*//;/^$/d'); printf '\e[32m$\e[0m %s\n' "$r"; printf '%s' "$r" | pbcopy; read -rp 'Run? [y/N] ' a && [[ $a == y ]] && eval "$r"; }
+```
+
+```bash
+ai find all swift files larger than 1MB
+# $ find . -name "*.swift" -size +1M
+# (copied to clipboard)
+# Run? [y/N]
+
+ai show disk usage sorted by size
+ai kill whatever is using port 3000
+ai list all git branches merged into main
+ai count lines of code by language
 ```
 
 **[oneliner](./demo/oneliner)** - complex pipe chains from plain English:

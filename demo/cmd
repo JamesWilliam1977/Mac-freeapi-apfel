@@ -5,6 +5,15 @@
 #         cmd -x "list all open ports"       # execute (asks confirm)
 #         cmd -c "kill all node processes"   # copy to clipboard
 #
+# One-liner version (add to .zshrc):
+#   ai() { r=$(apfel -q -s 'Reply ONLY with a shell command. No markdown, no explanation.' "$*" | sed '/^```/d;s/^[[:space:]]*//;/^$/d'); printf '\e[32m$\e[0m %s\n' "$r"; printf '%s' "$r" | pbcopy; read -rp 'Run? [y/N] ' a && [[ $a == y ]] && eval "$r"; }
+#
+# Examples:
+#   ai find all swift files larger than 1MB
+#   ai show disk usage sorted by size
+#   ai kill whatever is using port 3000
+#   ai list all git branches merged into main
+#
 # Requires: apfel installed (https://github.com/Arthur-Ficial/apfel)
 
 EXECUTE=false
