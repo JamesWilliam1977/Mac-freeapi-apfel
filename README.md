@@ -25,15 +25,10 @@ Every Mac with Apple Silicon has a **built-in LLM** - Apple's on-device foundati
 
 ![apfel GUI Debug Inspector](screenshots/gui-chat.png)
 
-## Requirements
+## Requirements & Install
 
-- Apple Silicon Mac
-- macOS 26 Tahoe or newer
-- [Apple Intelligence enabled](https://support.apple.com/en-us/121115)
-- **Homebrew install:** nothing else needed
-- **Build from source:** Command Line Tools with macOS 26.4 SDK (ships Swift 6.3). No Xcode required.
-
-## Install
+- Apple Silicon Mac, macOS 26 Tahoe or newer, [Apple Intelligence enabled](https://support.apple.com/en-us/121115)
+- Building from source requires Command Line Tools with macOS 26.4 SDK (ships Swift 6.3). No Xcode required.
 
 **Homebrew** (recommended):
 
@@ -42,7 +37,7 @@ brew tap Arthur-Ficial/tap
 brew install Arthur-Ficial/tap/apfel
 ```
 
-**Build from source** (requires macOS 26.4 SDK):
+**Build from source:**
 
 ```bash
 git clone https://github.com/Arthur-Ficial/apfel.git
@@ -50,7 +45,7 @@ cd apfel
 make install
 ```
 
-Detailed instructions, requirements, and troubleshooting: [docs/install.md](docs/install.md)
+Troubleshooting: [docs/install.md](docs/install.md)
 
 ## Quick Start
 
