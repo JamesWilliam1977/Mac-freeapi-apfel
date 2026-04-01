@@ -340,6 +340,7 @@ Every `make build`/`make install` automatically:
 
 ## Related Projects
 
+- [apfel-clip](https://github.com/Arthur-Ficial/apfel-clip) - AI-powered clipboard actions from the menu bar (fix grammar, translate, explain code, and more)
 - [apfel-gui](https://github.com/Arthur-Ficial/apfel-gui) - Native macOS SwiftUI debug GUI for apfel (chat, request inspector, logs, TTS/STT)
 
 ## Examples
