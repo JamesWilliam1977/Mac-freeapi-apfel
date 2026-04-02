@@ -44,68 +44,21 @@ func handleChatCompletion(_ request: Request, context: some RequestContext) asyn
             event: "decode failed: \(msg)"
         )
     }
+    let isStreaming = chatRequest.stream == true
 
-    // Validate: must have at least one message
-    guard !chatRequest.messages.isEmpty else {
-        let msg = "'messages' must contain at least one message"
+    if let failure = ChatRequestValidator.validate(chatRequest) {
         return chatFailure(
             status: .badRequest,
-            message: msg,
+            message: failure.message,
             type: "invalid_request_error",
-            stream: chatRequest.stream == true,
+            stream: isStreaming,
             requestBody: requestBodyString,
             events: events,
-            event: "validation failed: empty messages"
+            event: failure.event
         )
     }
 
-    if let unsupported = unsupportedParameter(in: chatRequest) {
-        return chatFailure(
-            status: .badRequest,
-            message: unsupported.message,
-            type: "invalid_request_error",
-            stream: chatRequest.stream == true,
-            requestBody: requestBodyString,
-            events: events,
-            event: "validation failed: unsupported parameter \(unsupported.name)"
-        )
-    }
-
-    // Validate: last message must be user or tool (tool = standard tool-calling flow)
-    guard ["user", "tool"].contains(chatRequest.messages.last?.role) else {
-        let msg = "Last message must have role 'user' or 'tool'"
-        return chatFailure(
-            status: .badRequest,
-            message: msg,
-            type: "invalid_request_error",
-            stream: chatRequest.stream == true,
-            requestBody: requestBodyString,
-            events: events,
-            event: "validation failed: last role != user/tool"
-        )
-    }
-
-    // Reject image content (not supported by Apple's on-device model)
-    let hasImages = chatRequest.messages.contains { msg in
-        if case .parts(let parts) = msg.content {
-            return parts.contains { $0.type == "image_url" }
-        }
-        return false
-    }
-    if hasImages {
-        let msg = "Image content is not supported by the Apple on-device model"
-        return chatFailure(
-            status: .badRequest,
-            message: msg,
-            type: "invalid_request_error",
-            stream: chatRequest.stream == true,
-            requestBody: requestBodyString,
-            events: events,
-            event: "rejected: image content"
-        )
-    }
-
-    events.append("decoded messages=\(chatRequest.messages.count) stream=\(chatRequest.stream == true) model=\(chatRequest.model)")
+    events.append("decoded messages=\(chatRequest.messages.count) stream=\(isStreaming) model=\(chatRequest.model)")
 
     // Build context config from request extensions (optional, defaults to newest-first)
     let contextConfig = ContextConfig(
@@ -142,7 +95,7 @@ func handleChatCompletion(_ request: Request, context: some RequestContext) asyn
             status: .init(code: classified.httpStatusCode),
             message: msg,
             type: classified.openAIType,
-            stream: chatRequest.stream == true,
+            stream: isStreaming,
             requestBody: requestBodyString,
             events: events,
             event: "context build failed: \(msg)"
@@ -157,7 +110,7 @@ func handleChatCompletion(_ request: Request, context: some RequestContext) asyn
     let requestId = "chatcmpl-\(UUID().uuidString.prefix(12).lowercased())"
     let created = Int(Date().timeIntervalSince1970)
 
-    if chatRequest.stream == true {
+    if isStreaming {
         let result = streamingResponse(session: session, prompt: finalPrompt,
                                        id: requestId, created: created,
                                        genOpts: genOpts, promptTokens: promptTokens,
@@ -410,50 +363,6 @@ final class TraceBuffer: @unchecked Sendable {
     func snapshot() -> [String] {
         lock.lock(); defer { lock.unlock() }; return events
     }
-}
-
-private struct UnsupportedParameter {
-    let name: String
-    let message: String
-}
-
-private func unsupportedParameter(in request: ChatCompletionRequest) -> UnsupportedParameter? {
-    if request.logprobs == true {
-        return UnsupportedParameter(
-            name: "logprobs",
-            message: "Parameter 'logprobs' is not supported by Apple's on-device model."
-        )
-    }
-
-    if let n = request.n, n != 1 {
-        return UnsupportedParameter(
-            name: "n",
-            message: "Parameter 'n' is not supported by Apple's on-device model. Only n=1 is allowed."
-        )
-    }
-
-    if request.stop != nil {
-        return UnsupportedParameter(
-            name: "stop",
-            message: "Parameter 'stop' is not supported by Apple's on-device model."
-        )
-    }
-
-    if request.presence_penalty != nil {
-        return UnsupportedParameter(
-            name: "presence_penalty",
-            message: "Parameter 'presence_penalty' is not supported by Apple's on-device model."
-        )
-    }
-
-    if request.frequency_penalty != nil {
-        return UnsupportedParameter(
-            name: "frequency_penalty",
-            message: "Parameter 'frequency_penalty' is not supported by Apple's on-device model."
-        )
-    }
-
-    return nil
 }
 
 private func chatFailure(

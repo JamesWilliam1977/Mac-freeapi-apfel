@@ -47,6 +47,8 @@ func suite(_ name: String, _ block: () -> Void) {
 suite("ApfelErrorTests") { runApfelErrorTests() }
 suite("ToolCallHandlerTests") { runToolCallHandlerTests() }
 suite("ContextStrategyTests") { runContextStrategyTests() }
+suite("OpenAIModelsTests") { runOpenAIModelsTests() }
+suite("ChatRequestValidatorTests") { runChatRequestValidatorTests() }
 
 // MARK: - Summary
 

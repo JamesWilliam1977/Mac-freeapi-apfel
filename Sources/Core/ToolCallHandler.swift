@@ -27,13 +27,9 @@ public enum ToolCallHandler {
     /// Build output format instructions only (no tool schemas).
     /// Always needed — tells the model HOW to respond with tool calls.
     public static func buildOutputFormatInstructions(toolNames: [String]) -> String {
-        let nameList = toolNames.joined(separator: ", ")
         return """
         ## Tool Calling Format
-        When you need to call a function (\(nameList)), respond ONLY with this exact JSON (no other text before or after):
-        {"tool_calls": [{"id": "call_<unique>", "type": "function", "function": {"name": "<name>", "arguments": "<escaped_json_string>"}}]}
-
-        Replace <unique> with a short unique string, <name> with the function name, and <escaped_json_string> with the arguments as a JSON-encoded string.
+        \(toolCallResponseFormat(functionHint: " (\(toolNames.joined(separator: ", ")))"))
         """
     }
 
@@ -51,10 +47,7 @@ public enum ToolCallHandler {
     public static func buildSystemPrompt(tools: [ToolDef]) -> String {
         return """
         ## Available Functions
-        When you need to call a function, respond ONLY with this exact JSON (no other text before or after):
-        {"tool_calls": [{"id": "call_<unique>", "type": "function", "function": {"name": "<name>", "arguments": "<escaped_json_string>"}}]}
-
-        Replace <unique> with a short unique string, <name> with the function name, and <escaped_json_string> with the arguments as a JSON-encoded string.
+        \(toolCallResponseFormat())
 
         Available functions:
         \(serializedToolSchemas(tools))
@@ -147,14 +140,8 @@ public enum ToolCallHandler {
         if trimmed.isEmpty { return "{}" }
         // Already a JSON object or array
         if trimmed.hasPrefix("{") || trimmed.hasPrefix("[") { return s }
-        // Plain string — wrap as {"value": "<escaped>"}
-        let escaped = trimmed
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
-            .replacingOccurrences(of: "\n", with: "\\n")
-            .replacingOccurrences(of: "\r", with: "\\r")
-            .replacingOccurrences(of: "\t", with: "\\t")
-        return "{\"value\":\"\(escaped)\"}"
+        // Plain string — wrap as {"value": "..."} using the JSON encoder for escaping.
+        return jsonObjectString(["value": trimmed]) ?? "{}"
     }
 
     private static func parseToolCallJSON(_ json: String) -> [ParsedToolCall]? {
@@ -181,5 +168,22 @@ public enum ToolCallHandler {
             result.append(ParsedToolCall(id: id, name: name, argumentsString: args))
         }
         return result.isEmpty ? nil : result
+    }
+
+    private static func toolCallResponseFormat(functionHint: String = "") -> String {
+        """
+        When you need to call a function\(functionHint), respond ONLY with this exact JSON (no other text before or after):
+        {"tool_calls": [{"id": "call_<unique>", "type": "function", "function": {"name": "<name>", "arguments": "<escaped_json_string>"}}]}
+
+        Replace <unique> with a short unique string, <name> with the function name, and <escaped_json_string> with the arguments as a JSON-encoded string.
+        """
+    }
+
+    private static func jsonObjectString(_ object: [String: String]) -> String? {
+        guard let data = try? JSONSerialization.data(withJSONObject: object),
+              let string = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+        return string.replacingOccurrences(of: "\\/", with: "/")
     }
 }

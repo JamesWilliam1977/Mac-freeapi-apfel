@@ -183,6 +183,12 @@ func runToolCallHandlerTests() {
         try assertEqual(result, #"{"value":"say \"hello\""}"#)
     }
 
+    test("ensureJSONArguments preserves backslashes and newlines as valid JSON") {
+        let result = ToolCallHandler.ensureJSONArguments("line1\nC:\\tmp")
+        let parsed = try JSONSerialization.jsonObject(with: Data(result.utf8)) as? [String: Any]
+        try assertEqual(parsed?["value"] as? String, "line1\nC:\\tmp")
+    }
+
     test("ensureJSONArguments converts empty string to empty object") {
         try assertEqual(ToolCallHandler.ensureJSONArguments(""), "{}")
         try assertEqual(ToolCallHandler.ensureJSONArguments("  "), "{}")
