@@ -268,7 +268,8 @@ private func streamingResponse(
                             index: 0,
                             delta: .init(role: nil, content: nil, tool_calls: openAIToolCalls),
                             finish_reason: "tool_calls"
-                        )]
+                        )],
+                        usage: nil
                     )
                     let toolLine = sseDataLine(toolChunk)
                     responseLines.append(toolLine.trimmingCharacters(in: .whitespacesAndNewlines))
@@ -283,16 +284,18 @@ private func streamingResponse(
                     }
                     let stopChunk = ChatCompletionChunk(
                         id: id, object: "chat.completion.chunk", created: created, model: modelName,
-                        choices: [.init(index: 0, delta: .init(role: nil, content: nil, tool_calls: nil), finish_reason: streamFinish)]
+                        choices: [.init(index: 0, delta: .init(role: nil, content: nil, tool_calls: nil), finish_reason: streamFinish)],
+                        usage: nil
                     )
                     let stopLine = sseDataLine(stopChunk)
                     responseLines.append(stopLine.trimmingCharacters(in: .whitespacesAndNewlines))
                     continuation.yield(ByteBuffer(string: stopLine))
                 }
 
-                // Emit usage stats before [DONE] (OpenAI stream_options pattern)
+                // Emit usage stats as a proper chunk before [DONE]
                 let completionTokens = await TokenCounter.shared.count(prev)
-                let usageLine = "data: {\"usage\":{\"prompt_tokens\":\(promptTokens),\"completion_tokens\":\(completionTokens),\"total_tokens\":\(promptTokens + completionTokens)}}\n\n"
+                let usageChunk = sseUsageChunk(id: id, created: created, promptTokens: promptTokens, completionTokens: completionTokens)
+                let usageLine = sseDataLine(usageChunk)
                 responseLines.append(usageLine.trimmingCharacters(in: .whitespacesAndNewlines))
                 continuation.yield(ByteBuffer(string: usageLine))
 

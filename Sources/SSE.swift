@@ -26,7 +26,8 @@ func sseRoleChunk(id: String, created: Int) -> ChatCompletionChunk {
             index: 0,
             delta: .init(role: "assistant", content: nil, tool_calls: nil),
             finish_reason: nil
-        )]
+        )],
+        usage: nil
     )
 }
 
@@ -41,7 +42,8 @@ func sseContentChunk(id: String, created: Int, content: String) -> ChatCompletio
             index: 0,
             delta: .init(role: nil, content: content, tool_calls: nil),
             finish_reason: nil
-        )]
+        )],
+        usage: nil
     )
 }
 
@@ -56,6 +58,23 @@ func sseStopChunk(id: String, created: Int) -> ChatCompletionChunk {
             index: 0,
             delta: .init(role: nil, content: nil, tool_calls: nil),
             finish_reason: "stop"
-        )]
+        )],
+        usage: nil
+    )
+}
+
+/// Create a usage-only SSE chunk (empty choices, usage stats).
+func sseUsageChunk(id: String, created: Int, promptTokens: Int, completionTokens: Int) -> ChatCompletionChunk {
+    ChatCompletionChunk(
+        id: id,
+        object: "chat.completion.chunk",
+        created: created,
+        model: modelName,
+        choices: [],
+        usage: .init(
+            prompt_tokens: promptTokens,
+            completion_tokens: completionTokens,
+            total_tokens: promptTokens + completionTokens
+        )
     )
 }

@@ -148,6 +148,12 @@ CHAT_COMPLETION_CHUNK_SCHEMA = {
         "created": {"type": "integer"},
         "model": {"type": "string"},
         "choices": {"type": "array", "items": CHUNK_CHOICE_SCHEMA},
+        "usage": {
+            "anyOf": [
+                USAGE_SCHEMA,
+                {"type": "null"},
+            ]
+        },
     },
 }
 
@@ -299,18 +305,11 @@ def test_chat_completion_finish_reason_stop():
 # ============================================================================
 
 def test_streaming_chunks_schema():
-    """Every streaming chunk matches the ChatCompletionChunk schema.
-    The final chunk may be a usage-only object (no id/object/choices) — OpenAI
-    sends this when stream_options.include_usage is set; apfel always sends it."""
+    """Every streaming chunk matches the ChatCompletionChunk schema."""
     chunks = chat_stream([{"role": "user", "content": "Say hi."}])
     assert len(chunks) > 0
     for chunk in chunks:
-        if "choices" in chunk:
-            validate(instance=chunk, schema=CHAT_COMPLETION_CHUNK_SCHEMA)
-        else:
-            # Usage-only final chunk
-            validate(instance=chunk, schema={"type": "object", "required": ["usage"],
-                                             "properties": {"usage": USAGE_SCHEMA}})
+        validate(instance=chunk, schema=CHAT_COMPLETION_CHUNK_SCHEMA)
 
 
 def test_streaming_first_chunk_has_role():
@@ -337,6 +336,21 @@ def test_streaming_object_field():
     for chunk in chunks:
         if "object" in chunk:
             assert chunk["object"] == "chat.completion.chunk"
+
+
+def test_streaming_usage_chunk_keeps_openai_chunk_envelope():
+    """Final usage chunk must still include standard chunk metadata for strict clients."""
+    chunks = chat_stream([{"role": "user", "content": "Reply with exactly OK."}])
+    usage_chunks = [chunk for chunk in chunks if chunk.get("usage") is not None]
+    assert usage_chunks, "Expected a final usage chunk in the stream"
+    usage_chunk = usage_chunks[-1]
+    validate(instance=usage_chunk, schema=CHAT_COMPLETION_CHUNK_SCHEMA)
+    assert usage_chunk["choices"] == []
+    assert usage_chunk["object"] == "chat.completion.chunk"
+    usage = usage_chunk["usage"]
+    assert usage["prompt_tokens"] > 0
+    assert usage["completion_tokens"] > 0
+    assert usage["total_tokens"] == usage["prompt_tokens"] + usage["completion_tokens"]
 
 
 # ============================================================================

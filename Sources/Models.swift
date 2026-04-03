@@ -54,6 +54,7 @@ struct ChatCompletionChunk: Encodable, Sendable {
     let created: Int
     let model: String
     let choices: [ChunkChoice]
+    let usage: ChunkUsage?
 
     struct ChunkChoice: Encodable, Sendable {
         let index: Int
@@ -64,6 +65,11 @@ struct ChatCompletionChunk: Encodable, Sendable {
         let role: String?
         let content: String?
         let tool_calls: [ToolCall]?
+    }
+    struct ChunkUsage: Encodable, Sendable {
+        let prompt_tokens: Int
+        let completion_tokens: Int
+        let total_tokens: Int
     }
 }
 
