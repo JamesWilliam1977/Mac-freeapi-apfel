@@ -219,8 +219,8 @@ while i < args.count {
 
     case "--temperature":
         i += 1
-        guard i < args.count, let t = Double(args[i]) else {
-            printError("--temperature requires a number (e.g., 0.7)")
+        guard i < args.count, let t = Double(args[i]), t >= 0 else {
+            printError("--temperature requires a non-negative number (e.g., 0.7)")
             exit(exitUsageError)
         }
         cliTemperature = t
