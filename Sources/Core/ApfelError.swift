@@ -11,6 +11,8 @@ public enum ApfelError: Error, Equatable, Sendable {
     /// Classify any thrown error into a typed ApfelError.
     /// Matches on FoundationModels.GenerationError first, falls back to string matching.
     public static func classify(_ error: Error) -> ApfelError {
+        if let already = error as? ApfelError { return already }
+
         // Try typed match first (FoundationModels errors)
         let typeName = String(describing: type(of: error))
         let mirror = String(reflecting: error)

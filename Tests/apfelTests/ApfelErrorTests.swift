@@ -54,6 +54,12 @@ func runApfelErrorTests() {
         try assertEqual(ApfelError.concurrentRequest.httpStatusCode, 429)
         try assertEqual(ApfelError.unknown("x").httpStatusCode, 500)
     }
+    test("classify passes through existing ApfelError unchanged") {
+        try assertEqual(ApfelError.classify(ApfelError.contextOverflow), .contextOverflow)
+        try assertEqual(ApfelError.classify(ApfelError.guardrailViolation), .guardrailViolation)
+        try assertEqual(ApfelError.classify(ApfelError.rateLimited), .rateLimited)
+        try assertEqual(ApfelError.classify(ApfelError.concurrentRequest), .concurrentRequest)
+    }
     test("openAIMessage is non-empty for all cases") {
         let cases: [ApfelError] = [.guardrailViolation, .contextOverflow, .rateLimited,
                                     .concurrentRequest, .unknown("oops")]
