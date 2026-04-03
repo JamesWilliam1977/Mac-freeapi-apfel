@@ -117,6 +117,54 @@ func runChatRequestValidatorTests() {
             "Parameter 'frequency_penalty' is not supported by Apple's on-device model."
         )
     }
+
+    test("validator rejects max_tokens <= 0") {
+        let request = try decode(
+            ChatCompletionRequest.self,
+            from: #"{"model":"apfel","messages":[{"role":"user","content":"hi"}],"max_tokens":0}"#
+        )
+        if case .invalidParameterValue = ChatRequestValidator.validate(request) { } else {
+            throw TestFailure("expected .invalidParameterValue for max_tokens=0")
+        }
+    }
+
+    test("validator rejects negative temperature") {
+        let request = try decode(
+            ChatCompletionRequest.self,
+            from: #"{"model":"apfel","messages":[{"role":"user","content":"hi"}],"temperature":-1.0}"#
+        )
+        if case .invalidParameterValue = ChatRequestValidator.validate(request) { } else {
+            throw TestFailure("expected .invalidParameterValue for temperature=-1")
+        }
+    }
+
+    test("validator accepts valid max_tokens and temperature") {
+        let request = try decode(
+            ChatCompletionRequest.self,
+            from: #"{"model":"apfel","messages":[{"role":"user","content":"hi"}],"max_tokens":100,"temperature":0.7}"#
+        )
+        try assertNil(ChatRequestValidator.validate(request))
+    }
+
+    test("validator rejects x_context_max_turns <= 0") {
+        let request = try decode(
+            ChatCompletionRequest.self,
+            from: #"{"model":"apfel","messages":[{"role":"user","content":"hi"}],"x_context_max_turns":0}"#
+        )
+        if case .invalidParameterValue = ChatRequestValidator.validate(request) { } else {
+            throw TestFailure("expected .invalidParameterValue for x_context_max_turns=0")
+        }
+    }
+
+    test("validator rejects x_context_output_reserve <= 0") {
+        let request = try decode(
+            ChatCompletionRequest.self,
+            from: #"{"model":"apfel","messages":[{"role":"user","content":"hi"}],"x_context_output_reserve":-1}"#
+        )
+        if case .invalidParameterValue = ChatRequestValidator.validate(request) { } else {
+            throw TestFailure("expected .invalidParameterValue for x_context_output_reserve=-1")
+        }
+    }
 }
 
 private func unwrap<T>(_ value: T?, _ message: String) throws -> T {

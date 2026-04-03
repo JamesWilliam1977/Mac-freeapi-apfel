@@ -54,6 +54,7 @@ public enum ChatRequestValidationFailure: Sendable, Equatable {
     case unsupportedParameter(UnsupportedChatParameter)
     case invalidLastRole
     case imageContent
+    case invalidParameterValue(String)
 
     public var message: String {
         switch self {
@@ -65,6 +66,8 @@ public enum ChatRequestValidationFailure: Sendable, Equatable {
             return "Last message must have role 'user' or 'tool'"
         case .imageContent:
             return "Image content is not supported by the Apple on-device model"
+        case .invalidParameterValue(let detail):
+            return detail
         }
     }
 
@@ -78,6 +81,8 @@ public enum ChatRequestValidationFailure: Sendable, Equatable {
             return "validation failed: last role != user/tool"
         case .imageContent:
             return "rejected: image content"
+        case .invalidParameterValue(let detail):
+            return "validation failed: \(detail)"
         }
     }
 }
@@ -98,6 +103,19 @@ public enum ChatRequestValidator {
 
         if request.messages.contains(where: \.containsImageContent) {
             return .imageContent
+        }
+
+        if let maxTokens = request.max_tokens, maxTokens <= 0 {
+            return .invalidParameterValue("'max_tokens' must be a positive integer, got \(maxTokens)")
+        }
+        if let temp = request.temperature, temp < 0 {
+            return .invalidParameterValue("'temperature' must be non-negative, got \(temp)")
+        }
+        if let turns = request.x_context_max_turns, turns <= 0 {
+            return .invalidParameterValue("'x_context_max_turns' must be a positive integer, got \(turns)")
+        }
+        if let reserve = request.x_context_output_reserve, reserve <= 0 {
+            return .invalidParameterValue("'x_context_output_reserve' must be a positive integer, got \(reserve)")
         }
 
         return nil

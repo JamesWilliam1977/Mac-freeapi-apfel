@@ -228,8 +228,10 @@ func startServer(config: ServerConfig) async throws {
     printStderr(styled("Endpoints:", .yellow, .bold))
     printStderr("  POST http://\(config.host):\(config.port)/v1/chat/completions")
     printStderr("  GET  http://\(config.host):\(config.port)/v1/models")
-    printStderr("  GET  http://\(config.host):\(config.port)/v1/logs")
-    printStderr("  GET  http://\(config.host):\(config.port)/v1/logs/stats")
+    if config.debug {
+        printStderr("  GET  http://\(config.host):\(config.port)/v1/logs")
+        printStderr("  GET  http://\(config.host):\(config.port)/v1/logs/stats")
+    }
     printStderr("  GET  http://\(config.host):\(config.port)/health")
     printStderr("")
 
