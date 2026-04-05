@@ -54,7 +54,7 @@ HTTP Server (/v1/*) ───────┘   ContextManager → Transcript API
 
 ## Current Status
 
-- Version source of truth: `.version` (currently `0.8.3`)
+- Version source of truth: `.version` (currently `0.8.4`)
 - Tests: `129` unit + `131` integration (full suite ~55 seconds)
 - Issues `#34` (arrow keys) and `#35` (MCP auto-execute) fixed in v0.8.1
 - GitHub issue `#33` is closed; the landing page example lives in a separate repo
