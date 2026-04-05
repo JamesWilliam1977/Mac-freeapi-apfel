@@ -100,14 +100,28 @@ func singlePrompt(_ prompt: String, systemPrompt: String?, stream: Bool, options
 // MARK: - Interactive Chat
 
 /// Run an interactive multi-turn chat session with context window protection.
-func chat(systemPrompt: String?, options: SessionOptions = .defaults) async throws {
+func chat(systemPrompt: String?, options: SessionOptions = .defaults, mcpManager: MCPManager? = nil) async throws {
     guard isatty(STDIN_FILENO) != 0 else {
         printError("--chat requires an interactive terminal (stdin must be a TTY)")
         exit(exitUsageError)
     }
 
+    let mcpTools = await mcpManager?.allTools() ?? []
+    let hasMCPTools = !mcpTools.isEmpty
+
     let model = makeModel(permissive: options.permissive)
-    var session = makeSession(systemPrompt: systemPrompt, options: options)
+    var session: LanguageModelSession
+    if hasMCPTools {
+        let messages: [OpenAIMessage] = {
+            var msgs: [OpenAIMessage] = []
+            if let sys = systemPrompt { msgs.append(OpenAIMessage(role: "system", content: .text(sys))) }
+            return msgs
+        }()
+        (session, _) = try await ContextManager.makeSession(
+            messages: messages, tools: mcpTools, options: options, jsonMode: false, toolChoice: nil)
+    } else {
+        session = makeSession(systemPrompt: systemPrompt, options: options)
+    }
     let genOpts = makeGenerationOptions(options)
     let lineEditor = ChatLineEditor(outputFormat: outputFormat)
     var turn = 0
@@ -153,13 +167,37 @@ func chat(systemPrompt: String?, options: SessionOptions = .defaults) async thro
         }
 
         do {
+            var content: String
             switch outputFormat {
             case .plain:
-                let _ = try await collectStream(session, prompt: trimmed, printDelta: true, options: genOpts)
-                print("\n")
+                content = try await collectStream(session, prompt: trimmed, printDelta: !hasMCPTools, options: genOpts)
+                if !hasMCPTools { print("\n") }
 
             case .json:
-                let content = try await collectStream(session, prompt: trimmed, printDelta: false, options: genOpts)
+                content = try await collectStream(session, prompt: trimmed, printDelta: false, options: genOpts)
+            }
+
+            // MCP tool execution: detect tool call, execute, get plain text answer
+            if hasMCPTools, let result = try await executeMCPToolCalls(
+                in: content, mcpManager: mcpManager, userPrompt: trimmed,
+                systemPrompt: systemPrompt, options: genOpts
+            ) {
+                content = result.content
+                if !quietMode {
+                    for log in result.toolLog {
+                        if log.isError {
+                            printStderr("\(styled("tool:", .red)) \(log.name) failed: \(log.result)")
+                        } else {
+                            printStderr("\(styled("tool:", .cyan)) \(log.name)(\(log.args)) = \(log.result)")
+                        }
+                    }
+                }
+            }
+
+            switch outputFormat {
+            case .plain:
+                if hasMCPTools { print(content + "\n") }
+            case .json:
                 print(jsonString(
                     ChatMessage(role: "assistant", content: content, model: modelName),
                     pretty: false
