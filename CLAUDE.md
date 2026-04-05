@@ -54,8 +54,8 @@ HTTP Server (/v1/*) ───────┘   ContextManager → Transcript API
 
 ## Current Status
 
-- Version source of truth: `.version` (currently `0.8.4`)
-- Tests: `129` unit + `131` integration (full suite ~55 seconds)
+- Version source of truth: `.version` (currently `0.8.5`)
+- Tests: `129` unit + `135` integration (full suite ~60 seconds)
 - Issues `#34` (arrow keys) and `#35` (MCP auto-execute) fixed in v0.8.1
 - GitHub issue `#33` is closed; the landing page example lives in a separate repo
 
@@ -102,7 +102,7 @@ bash scripts/generate-examples.sh          # ~2 minutes, overwrites docs/EXAMPLE
 | Security | `Sources/Core/OriginValidator.swift`, `Sources/SecurityMiddleware.swift` |
 | MCP client | `Sources/Core/MCPProtocol.swift`, `Sources/MCPClient.swift` |
 | MCP calculator | `mcp/calculator/server.py` |
-| Tests | `Tests/apfelTests/` (129 unit), `Tests/integration/` (131 integration) |
+| Tests | `Tests/apfelTests/` (129 unit), `Tests/integration/` (135 integration) |
 | Tickets | `open-tickets/` |
 | Docs | `docs/` (brew-install, EXAMPLES, release, tool-calling-guide) |
 | Scripts | `scripts/generate-examples.sh` (regenerates docs/EXAMPLES.md), `scripts/write-homebrew-formula.sh` |

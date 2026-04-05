@@ -1,6 +1,6 @@
 # apfel
 
-[![Version 0.8.4](https://img.shields.io/badge/version-0.8.4-blue)](https://github.com/Arthur-Ficial/apfel)
+[![Version 0.8.5](https://img.shields.io/badge/version-0.8.5-blue)](https://github.com/Arthur-Ficial/apfel)
 [![Swift 6.3+](https://img.shields.io/badge/Swift-6.3%2B-F05138?logo=swift&logoColor=white)](https://swift.org)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B-000000?logo=apple&logoColor=white)](https://developer.apple.com/macos/)
 [![No Xcode Required](https://img.shields.io/badge/Xcode-not%20required-orange)](https://developer.apple.com/xcode/resources/)
@@ -199,11 +199,18 @@ echo "extra context" | apfel -f code.swift "Explain this code with the context a
 Attach [MCP](https://modelcontextprotocol.io/) tool servers with `--mcp`. apfel discovers tools, executes them automatically, and returns the final answer. No glue code needed.
 
 ```bash
-# Give the model a calculator
 apfel --mcp ./mcp/calculator/server.py "What is 15 times 27?"
-# tool: multiply({"a": 15, "b": 27}) = 405
-# 15 times 27 is 405.
+```
 
+```
+mcp: ./mcp/calculator/server.py - add, subtract, multiply, divide, sqrt, power    ← stderr
+tool: multiply({"a": 15, "b": 27}) = 405                                          ← stderr
+15 times 27 is 405.                                                                ← stdout
+```
+
+Tool discovery and call info goes to stderr (visible in terminal, invisible when piped). Only the answer goes to stdout. Use `-q` to suppress tool info entirely.
+
+```bash
 # Multiple MCP servers (bring your own)
 apfel --mcp ./server_a.py --mcp ./server_b.py "Use both tools"
 

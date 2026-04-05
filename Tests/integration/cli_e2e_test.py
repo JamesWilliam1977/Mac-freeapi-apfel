@@ -670,6 +670,57 @@ def test_release_is_not_async():
     assert elapsed < 2, f"--release took {elapsed:.2f}s - should be instant"
 
 
+# --- MCP CLI UNIX correctness tests ---
+
+MCP_CALC = str(ROOT / "mcp" / "calculator" / "server.py")
+
+
+def test_mcp_tool_info_goes_to_stderr():
+    """MCP discovery and tool call info must go to stderr, not stdout."""
+    require_model()
+    result = run_cli(["--mcp", MCP_CALC, "What is 2 + 2?"], timeout=30)
+    assert result.returncode == 0
+    assert "mcp:" not in result.stdout, \
+        f"mcp: discovery line leaked to stdout: {result.stdout[:200]}"
+    assert "tool:" not in result.stdout, \
+        f"tool: call line leaked to stdout: {result.stdout[:200]}"
+    assert "mcp:" in result.stderr, \
+        "mcp: discovery line missing from stderr"
+
+
+def test_mcp_stdout_only_has_answer():
+    """When piping, stdout must contain only the model's answer."""
+    require_model()
+    result = run_cli(["--mcp", MCP_CALC, "Use the add tool to add 10 and 20. Reply with just the number."], timeout=30)
+    assert result.returncode == 0
+    stdout_stripped = result.stdout.strip()
+    assert "mcp:" not in stdout_stripped
+    assert "tool:" not in stdout_stripped
+    assert len(stdout_stripped) > 0, "stdout should contain the answer"
+
+
+def test_mcp_quiet_suppresses_tool_info():
+    """--quiet must suppress both mcp: and tool: lines on stderr."""
+    require_model()
+    result = run_cli(["-q", "--mcp", MCP_CALC, "What is 3 times 3?"], timeout=30)
+    assert result.returncode == 0
+    assert "mcp:" not in result.stderr, \
+        f"mcp: discovery line not suppressed by -q: {result.stderr[:200]}"
+    assert "tool:" not in result.stderr, \
+        f"tool: call line not suppressed by -q: {result.stderr[:200]}"
+
+
+def test_mcp_json_output_is_clean():
+    """JSON output must not contain MCP diagnostic lines."""
+    require_model()
+    result = run_cli(["-o", "json", "--mcp", MCP_CALC, "What is 5 plus 5?"], timeout=30)
+    assert result.returncode == 0
+    import json
+    data = json.loads(result.stdout.strip())
+    assert "content" in data
+    assert "mcp:" not in data["content"]
+
+
 # --- README CLI Reference completeness test ---
 
 

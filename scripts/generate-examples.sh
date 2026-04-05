@@ -29,6 +29,9 @@ run() {
     output=$(apfel "${args[@]}" 2>&1) || true
     echo " done" >&2
 
+    local wrapped
+    wrapped=$(echo "$output" | fold -s -w 80)
+
     cat <<BLOCK
 
 \`\`\`
@@ -36,7 +39,7 @@ run() {
 \`\`\`
 
 \`\`\`\`
-${output}
+${wrapped}
 \`\`\`\`
 
 ---
@@ -55,6 +58,9 @@ run_with_flags() {
     output=$(apfel "${args[@]}" 2>&1) || true
     echo " done" >&2
 
+    local wrapped
+    wrapped=$(echo "$output" | fold -s -w 80)
+
     cat <<BLOCK
 
 \`\`\`
@@ -62,7 +68,7 @@ run_with_flags() {
 \`\`\`
 
 \`\`\`\`
-${output}
+${wrapped}
 \`\`\`\`
 
 ---
@@ -74,13 +80,29 @@ echo "" >&2
 
 {
 cat <<HEADER
-# 50 Real Examples - Challenging Apple Intelligence
+# Real Examples - Challenging Apple Intelligence
 
-Every response below is **real, unedited output** from Apple's on-device model via \`apfel\`.
-Nothing was cherry-picked, cleaned up, or re-run.
+Every response below is **real, unedited output** from Apple's on-device model
+via \`apfel\`. Nothing was cherry-picked, cleaned up, or re-run.
 This file was generated automatically by \`scripts/generate-examples.sh\`.
 
 > apfel v${VERSION} | macOS ${OS_VER} | ${CHIP} | ${DATE}
+
+## Table of Contents
+
+1. [Identity & Self-Awareness](#1-identity--self-awareness)
+2. [Philosophy](#2-philosophy)
+3. [Ethics](#3-ethics)
+4. [Security Challenges](#4-security-challenges)
+5. [Coding](#5-coding)
+6. [Math & Logic](#6-math--logic)
+7. [Creative Writing](#7-creative-writing)
+8. [Translation](#8-translation)
+9. [General Knowledge](#9-general-knowledge)
+10. [System Prompt Tricks](#10-system-prompt-tricks)
+11. [MCP Tool Calling](#11-mcp-tool-calling)
+12. [Edge Cases](#12-edge-cases)
+13. [Formatting & Structure](#13-formatting--structure)
 
 ---
 

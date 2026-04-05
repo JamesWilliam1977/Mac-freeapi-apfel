@@ -193,7 +193,9 @@ actor MCPManager {
             for tool in conn.tools {
                 toolMap[tool.function.name] = conn
             }
-            printStderr("\(styled("mcp:", .cyan)) \(conn.path) - \(conn.tools.map(\.function.name).joined(separator: ", "))")
+            if !quietMode {
+                printStderr("\(styled("mcp:", .cyan)) \(conn.path) - \(conn.tools.map(\.function.name).joined(separator: ", "))")
+            }
         }
     }
 
