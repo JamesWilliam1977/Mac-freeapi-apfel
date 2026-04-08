@@ -160,10 +160,10 @@ def multiply_streaming_response():
 
 @pytest.fixture(scope="module")
 def normal_nonstreaming_response():
-    """Non-streaming 'Say OK.' -- shared by normal-response, id, and structure tests."""
+    """Non-streaming plain text -- shared by normal-response, id, and structure tests."""
     resp = httpx.post(f"{API_URL}/chat/completions", json={
         "model": MODEL,
-        "messages": [{"role": "user", "content": "Say OK."}],
+        "messages": [{"role": "user", "content": "What is the capital of France? Reply in one word, no tools needed."}],
     }, timeout=TIMEOUT)
     assert resp.status_code == 200
     return resp.json()
