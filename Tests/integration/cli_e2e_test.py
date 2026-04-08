@@ -834,3 +834,55 @@ def test_homebrew_formula_has_service_block():
     assert "service do" in content, "Formula missing 'service do' block"
     assert "keep_alive" in content, "Formula service block missing keep_alive"
     assert "log_path" in content, "Formula service block missing log_path"
+
+
+def test_mcp_timeout_flag_in_help():
+    """--mcp-timeout must appear in help output."""
+    result = run_cli(["--help"])
+    assert "--mcp-timeout" in result.stdout, \
+        f"--mcp-timeout not in help: {result.stdout[:500]}"
+
+
+def test_mcp_timeout_env_var_in_help():
+    """APFEL_MCP_TIMEOUT must appear in help output."""
+    result = run_cli(["--help"])
+    assert "APFEL_MCP_TIMEOUT" in result.stdout, \
+        f"APFEL_MCP_TIMEOUT not in help: {result.stdout[:500]}"
+
+
+def test_mcp_timeout_short_causes_fast_failure():
+    """--mcp-timeout 1 with a slow MCP server should fail within ~2 seconds."""
+    slow_server = str(ROOT / "Tests" / "integration" / "fixtures" / "slow_startup_mcp_server.py")
+    start = time.time()
+    result = run_cli(
+        ["--mcp-timeout", "1", "--mcp", slow_server, "hello"],
+        timeout=10,
+    )
+    elapsed = time.time() - start
+    assert result.returncode != 0, "Should have failed with timeout"
+    assert "timed out" in result.stderr.lower(), \
+        f"Expected timeout error, got: {result.stderr}"
+    assert elapsed < 5, f"Timeout took {elapsed:.1f}s, expected <5s with --mcp-timeout 1"
+
+
+def test_mcp_timeout_env_var_works():
+    """APFEL_MCP_TIMEOUT=1 should timeout same as --mcp-timeout 1."""
+    slow_server = str(ROOT / "Tests" / "integration" / "fixtures" / "slow_startup_mcp_server.py")
+    start = time.time()
+    result = run_cli(
+        ["--mcp", slow_server, "hello"],
+        env={"APFEL_MCP_TIMEOUT": "1"},
+        timeout=10,
+    )
+    elapsed = time.time() - start
+    assert result.returncode != 0
+    assert "timed out" in result.stderr.lower()
+    assert elapsed < 5, f"Env var timeout took {elapsed:.1f}s, expected <5s"
+
+
+def test_mcp_timeout_default_unchanged():
+    """Default MCP timeout (5s) should still work for normal fast servers."""
+    require_model()
+    mcp_path = str(ROOT / "mcp" / "calculator" / "server.py")
+    result = run_cli(["--mcp", mcp_path, "What is 1+1?"], timeout=30)
+    assert result.returncode == 0, f"Normal MCP should work with default timeout: {result.stderr}"

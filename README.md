@@ -325,6 +325,7 @@ INPUT
   apfel -s, --system <text> <prompt>      Set system prompt
   apfel --system-file <path> <prompt>     Read system prompt from file
   apfel --mcp <server.py> <prompt>        Attach MCP tool server (repeatable)
+  apfel --mcp-timeout <n> <prompt>       MCP timeout in seconds [default: 5]
 
 OUTPUT
   -o, --output <fmt>                      Output format: plain, json
@@ -392,9 +393,10 @@ apfel -s "You are a pirate" "What is recursion?"
 # --system-file
 apfel --system-file persona.txt "Introduce yourself"
 
-# --mcp
+# --mcp, --mcp-timeout
 apfel --mcp ./mcp/calculator/server.py "What is 15 times 27?"
 apfel --mcp ./calc.py --mcp ./weather.py "Use both tools"
+apfel --mcp-timeout 30 --mcp ./slow-remote-server.py "hello"
 
 # -o, --output
 apfel -o json "Translate to German: hello" | jq .content
@@ -499,6 +501,7 @@ See [docs/server-security.md](docs/server-security.md) for detailed documentatio
 | `APFEL_CONTEXT_MAX_TURNS` | Max turns for sliding-window |
 | `APFEL_CONTEXT_OUTPUT_RESERVE` | Tokens reserved for output |
 | `APFEL_MCP` | MCP server paths (colon-separated) |
+| `APFEL_MCP_TIMEOUT` | MCP timeout in seconds (default: 5, max: 300) |
 | `NO_COLOR` | Disable colors ([no-color.org](https://no-color.org)) |
 
 ## Architecture

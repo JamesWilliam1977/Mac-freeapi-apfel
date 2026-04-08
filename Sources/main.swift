@@ -88,6 +88,7 @@ var serverTokenAuto: Bool = false
 var serverPublicHealth: Bool = false
 var mcpServerPaths: [String] = env["APFEL_MCP"]?
     .split(separator: ":").map(String.init).filter { !$0.isEmpty } ?? []
+var mcpTimeoutSeconds: Int = Int(env["APFEL_MCP_TIMEOUT"] ?? "").flatMap { $0 > 0 ? min($0, 300) : nil } ?? 5
 var cliTemperature: Double? = Double(env["APFEL_TEMPERATURE"] ?? "")
 var cliSeed: UInt64? = nil
 var cliMaxTokens: Int? = Int(env["APFEL_MAX_TOKENS"] ?? "").flatMap { $0 > 0 ? $0 : nil }
@@ -232,6 +233,14 @@ while i < args.count {
             exit(exitUsageError)
         }
         mcpServerPaths.append(args[i])
+
+    case "--mcp-timeout":
+        i += 1
+        guard i < args.count, let t = Int(args[i]), t > 0 else {
+            printError("--mcp-timeout requires a positive number (seconds)")
+            exit(exitUsageError)
+        }
+        mcpTimeoutSeconds = min(t, 300)
 
     case "--temperature":
         i += 1
@@ -398,7 +407,7 @@ if mode != "model-info" && mode != "serve" && mode != "update" {
 var mcpManager: MCPManager?
 if !mcpServerPaths.isEmpty {
     do {
-        mcpManager = try await MCPManager(paths: mcpServerPaths)
+        mcpManager = try await MCPManager(paths: mcpServerPaths, timeoutSeconds: mcpTimeoutSeconds)
     } catch {
         printError("MCP server failed to start: \(error)")
         exit(exitRuntimeError)

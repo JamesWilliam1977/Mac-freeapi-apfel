@@ -9,8 +9,7 @@ import ApfelCore
 
 /// A connection to a single MCP server process (stdio transport).
 final class MCPConnection: @unchecked Sendable {
-    private static let startupTimeoutMilliseconds = 5_000
-    private static let toolCallTimeoutMilliseconds = 5_000
+    private let timeoutMilliseconds: Int
 
     let path: String
     private(set) var tools: [OpenAITool]
@@ -21,7 +20,8 @@ final class MCPConnection: @unchecked Sendable {
     private let lock = NSLock()
     private var nextId = 1
 
-    init(path: String) async throws {
+    init(path: String, timeoutSeconds: Int = 5) async throws {
+        self.timeoutMilliseconds = timeoutSeconds * 1000
         self.path = path
 
         guard FileManager.default.fileExists(atPath: path) else {
@@ -53,7 +53,7 @@ final class MCPConnection: @unchecked Sendable {
             // Initialize handshake
             let initResp = try sendAndReceive(
                 MCPProtocol.initializeRequest(id: allocId()),
-                timeoutMilliseconds: Self.startupTimeoutMilliseconds,
+                timeoutMilliseconds: timeoutMilliseconds,
                 operationDescription: "initialize"
             )
             let _ = try MCPProtocol.parseInitializeResponse(initResp)
@@ -62,7 +62,7 @@ final class MCPConnection: @unchecked Sendable {
             // Discover tools
             let toolsResp = try sendAndReceive(
                 MCPProtocol.toolsListRequest(id: allocId()),
-                timeoutMilliseconds: Self.startupTimeoutMilliseconds,
+                timeoutMilliseconds: timeoutMilliseconds,
                 operationDescription: "tools/list"
             )
             self.tools = try MCPProtocol.parseToolsListResponse(toolsResp)
@@ -79,7 +79,7 @@ final class MCPConnection: @unchecked Sendable {
         do {
             resp = try sendAndReceive(
                 MCPProtocol.toolsCallRequest(id: allocId(), name: name, arguments: arguments),
-                timeoutMilliseconds: Self.toolCallTimeoutMilliseconds,
+                timeoutMilliseconds: timeoutMilliseconds,
                 operationDescription: "tool '\(name)'"
             )
         } catch {
@@ -180,7 +180,7 @@ actor MCPManager {
     private var connections: [MCPConnection] = []
     private var toolMap: [String: MCPConnection] = [:]
 
-    init(paths: [String]) async throws {
+    init(paths: [String], timeoutSeconds: Int = 5) async throws {
         for path in paths {
             let absPath: String
             if path.hasPrefix("/") {
@@ -188,7 +188,7 @@ actor MCPManager {
             } else {
                 absPath = FileManager.default.currentDirectoryPath + "/" + path
             }
-            let conn = try await MCPConnection(path: absPath)
+            let conn = try await MCPConnection(path: absPath, timeoutSeconds: timeoutSeconds)
             connections.append(conn)
             for tool in conn.tools {
                 toolMap[tool.function.name] = conn

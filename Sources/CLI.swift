@@ -429,6 +429,7 @@ func printUsage() {
           --seed <n>             Random seed for reproducible output
           --max-tokens <n>       Maximum response tokens
           --mcp <path>           Attach MCP tool server (repeatable)
+          --mcp-timeout <n>      MCP server timeout in seconds [default: 5]
           --permissive           Use permissive content guardrails
           --retry [n]            Enable retry with exponential backoff [default: 3 retries]
           --model-info           Print model capabilities and exit
@@ -465,6 +466,7 @@ func printUsage() {
     \(styled("ENVIRONMENT:", .yellow, .bold))
       APFEL_SYSTEM_PROMPT       Default system prompt
       APFEL_MCP                 MCP server paths (colon-separated)
+      APFEL_MCP_TIMEOUT         MCP timeout in seconds [default: 5]
       APFEL_HOST                Server bind address [default: 127.0.0.1]
       APFEL_PORT                Server port [default: 11434]
       APFEL_TOKEN               Bearer token for server authentication
