@@ -17,6 +17,7 @@ final class MCPConnection: @unchecked Sendable {
     private let process: Process
     private let stdinPipe: Pipe
     private let stdoutPipe: Pipe
+    private let lineReader: BufferedLineReader
     private let lock = NSLock()
     private var nextId = 1
 
@@ -45,6 +46,7 @@ final class MCPConnection: @unchecked Sendable {
         self.process = proc
         self.stdinPipe = stdinP
         self.stdoutPipe = stdoutP
+        self.lineReader = BufferedLineReader(fileDescriptor: stdoutP.fileHandleForReading.fileDescriptor)
         self.tools = [] // placeholder, filled below
 
         try proc.run()
@@ -124,54 +126,10 @@ final class MCPConnection: @unchecked Sendable {
         operationDescription: String
     ) throws -> String {
         send(message)
-        var buffer = Data()
-        let fd = stdoutPipe.fileHandleForReading.fileDescriptor
-        let deadline = Date().timeIntervalSinceReferenceDate + (Double(timeoutMilliseconds) / 1000.0)
-
-        while true {
-            let remainingMilliseconds = Int((deadline - Date().timeIntervalSinceReferenceDate) * 1000.0)
-            if remainingMilliseconds <= 0 {
-                throw MCPError.timedOut("\(operationDescription.capitalized) timed out after \(timeoutMilliseconds / 1000)s")
-            }
-
-            var pollDescriptor = pollfd(fd: Int32(fd), events: Int16(POLLIN), revents: 0)
-            let ready = poll(&pollDescriptor, 1, Int32(remainingMilliseconds))
-            if ready == 0 {
-                throw MCPError.timedOut("\(operationDescription.capitalized) timed out after \(timeoutMilliseconds / 1000)s")
-            }
-            if ready < 0 {
-                if errno == EINTR { continue }
-                throw MCPError.processError("Failed waiting for MCP response: \(String(cString: strerror(errno)))")
-            }
-            if (pollDescriptor.revents & Int16(POLLNVAL)) != 0 {
-                throw MCPError.processError("MCP stdout became invalid")
-            }
-            if (pollDescriptor.revents & Int16(POLLERR)) != 0 {
-                throw MCPError.processError("MCP stdout reported an I/O error")
-            }
-            if (pollDescriptor.revents & Int16(POLLHUP)) != 0 && (pollDescriptor.revents & Int16(POLLIN)) == 0 {
-                throw MCPError.processError("MCP server closed unexpectedly")
-            }
-            if (pollDescriptor.revents & Int16(POLLIN)) == 0 {
-                continue
-            }
-
-            var byte: UInt8 = 0
-            let readCount = Darwin.read(fd, &byte, 1)
-            if readCount == 0 {
-                throw MCPError.processError("MCP server closed unexpectedly")
-            }
-            if readCount < 0 {
-                if errno == EINTR { continue }
-                throw MCPError.processError("Failed reading MCP response: \(String(cString: strerror(errno)))")
-            }
-            if byte == UInt8(ascii: "\n") { break }
-            buffer.append(&byte, count: 1)
-        }
-        guard let line = String(data: buffer, encoding: .utf8), !line.isEmpty else {
-            throw MCPError.processError("Empty response from MCP server")
-        }
-        return line
+        return try lineReader.readLine(
+            timeoutMilliseconds: timeoutMilliseconds,
+            operationDescription: operationDescription
+        )
     }
 }
 
