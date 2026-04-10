@@ -326,6 +326,104 @@ func runCLIArgumentsTests() {
         }
     }
 
+    test("--mcp-token sets mcpBearerToken") {
+        let args = try CLIArguments.parse(["--mcp", "https://remote.example.com/mcp", "--mcp-token", "secret123"])
+        try assertEqual(args.mcpBearerToken, "secret123")
+    }
+
+    test("--mcp-token without value throws") {
+        do {
+            _ = try CLIArguments.parse(["--mcp-token"])
+            try assertTrue(false, "should have thrown")
+        } catch let e as CLIParseError {
+            try assertTrue(e.message.contains("--mcp-token"))
+        }
+    }
+
+    test("--mcp accepts http URL") {
+        let args = try CLIArguments.parse(["--mcp", "http://localhost:9000/mcp"])
+        try assertEqual(args.mcpServerPaths, ["http://localhost:9000/mcp"])
+    }
+
+    test("--mcp accepts https URL") {
+        let args = try CLIArguments.parse(["--mcp", "https://mcp.example.com/v1/mcp"])
+        try assertEqual(args.mcpServerPaths, ["https://mcp.example.com/v1/mcp"])
+    }
+
+    test("--mcp and --mcp-token together set both fields") {
+        let args = try CLIArguments.parse([
+            "--mcp", "https://remote.example.com/mcp",
+            "--mcp-token", "mytoken",
+        ])
+        try assertEqual(args.mcpServerPaths, ["https://remote.example.com/mcp"])
+        try assertEqual(args.mcpBearerToken, "mytoken")
+    }
+
+    test("APFEL_MCP_TOKEN env sets mcpBearerToken") {
+        let args = try CLIArguments.parse([], env: ["APFEL_MCP_TOKEN": "envtoken"])
+        try assertEqual(args.mcpBearerToken, "envtoken")
+    }
+
+    test("APFEL_MCP_TOKEN empty string produces nil") {
+        let args = try CLIArguments.parse([], env: ["APFEL_MCP_TOKEN": ""])
+        try assertTrue(args.mcpBearerToken == nil)
+    }
+
+    test("--mcp-token CLI flag overrides APFEL_MCP_TOKEN env") {
+        let args = try CLIArguments.parse(
+            ["--mcp-token", "cli-token"],
+            env: ["APFEL_MCP_TOKEN": "env-token"]
+        )
+        try assertEqual(args.mcpBearerToken, "cli-token")
+    }
+
+    test("APFEL_MCP env splits on colon separator for local paths") {
+        let args = try CLIArguments.parse(["hi"], env: ["APFEL_MCP": "a.py:b.py"])
+        try assertEqual(args.mcpServerPaths, ["a.py", "b.py"])
+    }
+
+    test("APFEL_MCP env single URL is not split") {
+        let args = try CLIArguments.parse(["hi"], env: ["APFEL_MCP": "https://mcp.example.com/mcp"])
+        try assertEqual(args.mcpServerPaths, ["https://mcp.example.com/mcp"])
+    }
+
+    test("APFEL_MCP env URL with port is not mangled") {
+        let args = try CLIArguments.parse(
+            ["hi"],
+            env: ["APFEL_MCP": "https://localhost:8080/mcp"]
+        )
+        try assertEqual(args.mcpServerPaths, ["https://localhost:8080/mcp"])
+    }
+
+    test("APFEL_MCP env two colon-separated URLs preserved as two entries") {
+        let args = try CLIArguments.parse(
+            ["hi"],
+            env: ["APFEL_MCP": "https://a.example.com/mcp:https://b.example.com/mcp"]
+        )
+        try assertEqual(args.mcpServerPaths, ["https://a.example.com/mcp", "https://b.example.com/mcp"])
+    }
+
+    test("APFEL_MCP env comma separator for mixed local and remote") {
+        let args = try CLIArguments.parse(
+            ["hi"],
+            env: ["APFEL_MCP": "/path/calc.py,https://remote.example.com/mcp"]
+        )
+        try assertEqual(args.mcpServerPaths, ["/path/calc.py", "https://remote.example.com/mcp"])
+    }
+
+    test("APFEL_MCP env URL plus local path colon-separated gives two entries") {
+        let args = try CLIArguments.parse(
+            ["hi"],
+            env: ["APFEL_MCP": "https://remote-host:8080/mcp:/local/calc.py"]
+        )
+        try assertEqual(args.mcpServerPaths, ["https://remote-host:8080/mcp", "/local/calc.py"])
+    }
+
+    test("mcpBearerToken defaults to nil") {
+        let args = try CLIArguments.parse([])
+        try assertTrue(args.mcpBearerToken == nil)
+    }
+
     // ========================================================================
     // MARK: - Generation flags
     // ========================================================================
