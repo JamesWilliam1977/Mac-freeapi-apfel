@@ -576,6 +576,7 @@ Every `make build`/`make install` auto-bumps the patch version, updates the READ
 apfel works with any tool that speaks the OpenAI API. Verified configs:
 
 - **opencode** - AI coding assistant with apfel as local backend. [docs/integrations.md](docs/integrations.md)
+- **Visual Studio Code + Continue** - local review/chat model paired with a hosted model for edit/apply. [docs/local-setup-with-vs-code.md](docs/local-setup-with-vs-code.md)
 
 ## Related Projects
 
