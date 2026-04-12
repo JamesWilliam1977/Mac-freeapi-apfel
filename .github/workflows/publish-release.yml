@@ -76,6 +76,10 @@ jobs:
 
       - name: Run integration tests
         run: |
+          # Note: GitHub-hosted macos-26 runners do not have Apple Intelligence.
+          # Tests that need the model skip gracefully. The full 7-suite
+          # qualification runs locally via `make preflight`.
+
           # Start servers
           .build/release/apfel --serve --port 11434 2>/dev/null &
           .build/release/apfel --serve --port 11435 --mcp mcp/calculator/server.py 2>/dev/null &
@@ -90,16 +94,13 @@ jobs:
             sleep 1
           done
 
-          # Run 7 integration test suites
+          # Run structural integration tests (no Apple Intelligence needed)
           python3 -m pytest \
             Tests/integration/cli_e2e_test.py \
             Tests/integration/performance_test.py \
-            Tests/integration/openai_client_test.py \
-            Tests/integration/openapi_spec_test.py \
             Tests/integration/security_test.py \
-            Tests/integration/mcp_server_test.py \
-            Tests/integration/openapi_conformance_test.py \
-            -v --tb=short -x
+            Tests/integration/openapi_spec_test.py \
+            -v --tb=short
 
           # Cleanup
           pkill -f "apfel --serve" 2>/dev/null || true
