@@ -102,6 +102,18 @@ GitHub CI (`ci.yml`) runs on every push/PR as a safety net, but it is a **subset
 
 GitHub CI **cannot** run the full integration suite because GitHub-hosted `macos-26` runners are Intel Macs without Apple Intelligence. The full 519-test qualification (362 unit + 157 integration across 7 suites) runs locally on a Mac with Apple Intelligence via `make preflight` and `make release`. This local run is the real gate - no release ships without it.
 
+## Distribution channels
+
+Each release is published through three channels. All three pull the same signed tarball from the GitHub Release; nothing is rebuilt per-channel.
+
+| Channel | How fresh | Mechanism |
+|---------|-----------|-----------|
+| [homebrew-core](https://github.com/Homebrew/homebrew-core/blob/master/Formula/a/apfel.rb) (`brew install apfel`) | Up to ~24h after release | Homebrew `autobump-PR` bot detects new GitHub Releases and opens a formula-bump PR. |
+| [Arthur-Ficial/homebrew-tap](https://github.com/Arthur-Ficial/homebrew-tap) (`brew install Arthur-Ficial/tap/apfel`) | Synchronous with release | `scripts/publish-release.sh` pushes the new formula directly as part of `make release`. |
+| [nixpkgs](https://github.com/NixOS/nixpkgs/tree/master/pkgs/by-name/ap/apfel-ai) (`nix profile install nixpkgs#apfel-ai`) | Within ~5 min of release (Layer 2), or ~weekly (Layer 1) | Two layers: community [`r-ryantm`](https://github.com/ryantm/nixpkgs-update) bot (primary, ~weekly), plus our own [`bump-nixpkgs.yml`](.github/workflows/bump-nixpkgs.yml) workflow that opens a PR on every `release: published` event (fallback, minutes). See [nixpkgs.md](nixpkgs.md). |
+
+All three channels are "owned" in the sense that we file PRs against them and respond to reviewer feedback - but merges into homebrew-core and nixpkgs are gated by their respective maintainer communities. The tap is the only channel where we merge directly.
+
 ## Versioning rules
 
 apfel follows semver. See [STABILITY.md](../STABILITY.md) for the full stability policy.
@@ -132,4 +144,5 @@ Model output changes from macOS updates are NOT version bumps.
 - Do not create git tags manually
 - Do not run `gh release create` manually
 - Do not push to the Homebrew tap manually (the workflow handles it)
+- Do not push to the nixpkgs fork manually (the `bump-nixpkgs.yml` workflow handles it)
 - Do not run `make package-release-asset` outside the workflow

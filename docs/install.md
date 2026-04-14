@@ -16,7 +16,17 @@ brew install apfel
 
 No build tools needed. See [brew-install.md](brew-install.md) for troubleshooting.
 
-## Option 2: Build from source
+## Option 2: Nix (nixpkgs)
+
+```bash
+nix profile install nixpkgs#apfel-ai
+```
+
+The package ships the official signed release binary, so runtime requirements are the same as Homebrew (macOS 26 Tahoe, Apple Silicon, Apple Intelligence enabled). Attribute name is `apfel-ai` because nixpkgs already has an unrelated `apfel` package (a particle-physics PDF library) - the binary on your `$PATH` is still `apfel`.
+
+See [docs/nixpkgs.md](nixpkgs.md) for update cadence, automation details, and how to test the package locally.
+
+## Option 3: Build from source
 
 Requires Swift 6.3+ with developer tools that include the **macOS 26.4 SDK**. Xcode is **not** required - Command Line Tools are enough.
 

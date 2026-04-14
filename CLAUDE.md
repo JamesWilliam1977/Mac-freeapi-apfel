@@ -63,7 +63,7 @@ HTTP Server (/v1/*) ───────┘   ContextManager → Transcript API
 
 - Version: `1.0.0` (source of truth: `.version`)
 - Tests: 366 unit + 220 integration
-- Distribution: homebrew-core (`brew install apfel`)
+- Distribution: homebrew-core (`brew install apfel`), nixpkgs (`nix profile install nixpkgs#apfel-ai`), and the Arthur-Ficial/homebrew-tap
 - Stability policy: [STABILITY.md](STABILITY.md)
 - Security policy: [SECURITY.md](SECURITY.md)
 
@@ -297,16 +297,15 @@ This runs locally (not on GitHub Actions - GitHub runners lack Apple Intelligenc
 
 Verifies: GitHub Release exists with tarball, git tag exists, `.version` matches, installed binary matches.
 
-### Homebrew-core
+### Distribution channels
 
-apfel is distributed through homebrew-core. We do NOT maintain the formula.
+apfel ships through three channels. All pull the same signed tarball from each GitHub Release.
 
-- Users install: `brew install apfel`
-- Users upgrade: `brew upgrade apfel`
-- Autobump picks up new GitHub Releases automatically
-- Emergency: `brew bump-formula-pr apfel --url=<tarball-url> --sha256=<hash>`
-
-The custom tap (`Arthur-Ficial/homebrew-tap`) is a secondary channel for apfel-family tools (apfel-chat, apfel-clip, apfel-mcp, etc.).
+- **homebrew-core** — `brew install apfel`. Autobump detects new releases; latency ~24h. We do not maintain the formula.
+- **Arthur-Ficial/homebrew-tap** — `brew install Arthur-Ficial/tap/apfel`. Synchronous, pushed as part of `make release`. Secondary channel; also houses apfel-family tools (apfel-chat, apfel-clip, apfel-mcp, etc.).
+- **nixpkgs** — `nix profile install nixpkgs#apfel-ai`. Name is `apfel-ai` because nixpkgs already has an unrelated physics `apfel`. Two-layer automation: community r-ryantm bot (~weekly) plus our `.github/workflows/bump-nixpkgs.yml` on every release (~5 min). See [docs/nixpkgs.md](docs/nixpkgs.md). Requires the `NIXPKGS_BUMP_PAT` repo secret.
+- Emergency Homebrew bump: `brew bump-formula-pr apfel --url=<tarball-url> --sha256=<hash>`
+- Emergency nixpkgs bump: run `scripts/bump-nixpkgs.sh` against a local nixpkgs clone and open a PR manually.
 
 ### Do NOT manually
 
