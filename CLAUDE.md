@@ -27,7 +27,7 @@ These two modes are what the README.md leads with. Every design decision, test, 
 
 3. **Interactive mini TUI chat** (`apfel --chat`) - **a byproduct for quick testing, not a main product.**
    - Ships because the pieces are already there (Session, ContextManager, tool calling)
-   - Handy to kick the tyres on a prompt or a local MCP server without writing a client
+   - Handy for quick testing a prompt or a local MCP server without writing a client
    - Should not dominate README real-estate; a short Quick Start entry is enough
    - For a GUI chat app, point users to `apfel-chat` (separate repo)
 

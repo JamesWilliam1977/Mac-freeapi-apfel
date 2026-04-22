@@ -26,7 +26,7 @@ Try it right away:
 apfel --chat
 ```
 
-A small interactive REPL for kicking the tyres ([Quick testing chat](#quick-testing-chat)).
+A small interactive REPL for quick testing ([Quick testing chat](#quick-testing-chat)).
 
 ![apfel CLI](screenshots/cli.png)
 
