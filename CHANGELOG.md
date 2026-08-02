@@ -7,6 +7,8 @@ and this project adheres to [https://semver.org/](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-08-02
+
 ### Added
 
 - `ApfelCore.EventStreamResponseHeaders`: new public policy value describing the SSE response headers (`Content-Type: text/event-stream`, `Cache-Control: no-cache`, `Connection: keep-alive`) as ordered (name, value) pairs - the single source of truth for every streaming endpoint, locked down by a unit test.
