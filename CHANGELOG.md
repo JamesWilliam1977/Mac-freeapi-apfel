@@ -7,6 +7,14 @@ and this project adheres to [https://semver.org/](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- `ApfelCore.EventStreamResponseHeaders`: new public policy value describing the SSE response headers (`Content-Type: text/event-stream`, `Cache-Control: no-cache`, `Connection: keep-alive`) as ordered (name, value) pairs - the single source of truth for every streaming endpoint, locked down by a unit test.
+
+### Changed
+
+- Single-sourced HTTP response construction across the OpenAI-compatible handlers (internal, behavior-preserving): the five hand-rolled SSE header blocks in `Handlers.swift`/`ResponsesHandlers.swift` now build from `EventStreamResponseHeaders` via a shared `eventStreamHeaders()` helper, and the five hand-rolled JSON success responses plus `openAIError` now route through the existing `jsonResponse(_:status:)` helper. No change to payloads, status codes, header names/values, or CORS.
+
 ## [1.8.4] - 2026-07-22
 
 ### Fixed

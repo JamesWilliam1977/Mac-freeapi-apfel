@@ -4,7 +4,19 @@
 // ============================================================================
 
 import Foundation
+import Hummingbird
 import ApfelCore
+
+/// Build the HTTP response headers every SSE streaming endpoint sends,
+/// from the shared `EventStreamResponseHeaders` policy in ApfelCore
+/// (single source of truth for names, values, and order).
+func eventStreamHeaders() -> HTTPFields {
+    var headers = HTTPFields()
+    for field in EventStreamResponseHeaders.fields {
+        headers[.init(field.name)!] = field.value
+    }
+    return headers
+}
 
 /// Format a single SSE data line from a ChatCompletionChunk.
 /// Returns: "data: {json}\n\n"

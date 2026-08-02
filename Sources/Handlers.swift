@@ -353,10 +353,7 @@ private func mcpAutoExecuteResponse(
         }
         chunks.append(sseDone)
         let body = chunks.joined()
-        var headers = HTTPFields()
-        headers[.contentType] = "text/event-stream"
-        headers[.cacheControl] = "no-cache"
-        headers[.init("Connection")!] = "keep-alive"
+        let headers = eventStreamHeaders()
         let response = Response(status: .ok, headers: headers,
                                  body: .init(byteBuffer: ByteBuffer(string: body)))
         return (
@@ -382,10 +379,7 @@ private func mcpAutoExecuteResponse(
                          total_tokens: promptTokens + completionTokens)
         )
         let body = jsonString(payload)
-        var headers = HTTPFields()
-        headers[.contentType] = "application/json"
-        let response = Response(status: .ok, headers: headers,
-                                 body: .init(byteBuffer: ByteBuffer(string: body)))
+        let response = jsonResponse(body)
         return (
             response,
             ChatRequestTrace(
@@ -473,10 +467,7 @@ private func nonStreamingResponse(
     )
 
     let body = jsonString(payload)
-    var headers = HTTPFields()
-    headers[.contentType] = "application/json"
-    let response = Response(status: .ok, headers: headers,
-                             body: .init(byteBuffer: ByteBuffer(string: body)))
+    let response = jsonResponse(body)
     return (
         response,
         ChatRequestTrace(
@@ -505,10 +496,7 @@ private func streamingResponse(
     requestBody: String?,
     events: [String]
 ) -> (response: Response, trace: ChatRequestTrace) {
-    var headers = HTTPFields()
-    headers[.contentType] = "text/event-stream"
-    headers[.cacheControl] = "no-cache"
-    headers[.init("Connection")!] = "keep-alive"
+    let headers = eventStreamHeaders()
     let eventBox = TraceBuffer(events: events + ["stream start"])
     let cleanup = StreamCleanup()
     let taskBox = StreamTaskBox()
@@ -862,10 +850,7 @@ private func structuredNonStreamingResponse(
                      total_tokens: promptTokens + completionTokens)
     )
     let body = jsonString(payload)
-    var headers = HTTPFields()
-    headers[.contentType] = "application/json"
-    let response = Response(status: .ok, headers: headers,
-                             body: .init(byteBuffer: ByteBuffer(string: body)))
+    let response = jsonResponse(body)
     return (
         response,
         ChatRequestTrace(
@@ -894,10 +879,7 @@ private func structuredStreamingResponse(
     requestBody: String?,
     events: [String]
 ) -> (response: Response, trace: ChatRequestTrace) {
-    var headers = HTTPFields()
-    headers[.contentType] = "text/event-stream"
-    headers[.cacheControl] = "no-cache"
-    headers[.init("Connection")!] = "keep-alive"
+    let headers = eventStreamHeaders()
     let eventBox = TraceBuffer(events: events + ["structured stream start"])
     let cleanup = StreamCleanup()
     let taskBox = StreamTaskBox()
@@ -1107,10 +1089,7 @@ private func refusalNonStreamingResponse(
         )
     )
     let body = jsonString(payload)
-    var headers = HTTPFields()
-    headers[.contentType] = "application/json"
-    let response = Response(status: .ok, headers: headers,
-                             body: .init(byteBuffer: ByteBuffer(string: body)))
+    let response = jsonResponse(body)
     return (
         response,
         ChatRequestTrace(
@@ -1152,10 +1131,7 @@ private func refusalStreamingResponse(
     }
     chunks.append(sseDone)
     let body = chunks.joined()
-    var headers = HTTPFields()
-    headers[.contentType] = "text/event-stream"
-    headers[.cacheControl] = "no-cache"
-    headers[.init("Connection")!] = "keep-alive"
+    let headers = eventStreamHeaders()
     let response = Response(status: .ok, headers: headers,
                              body: .init(byteBuffer: ByteBuffer(string: body)))
     return (
@@ -1176,8 +1152,5 @@ private func refusalStreamingResponse(
 /// Create an OpenAI-formatted error response (with CORS headers when enabled).
 func openAIError(status: HTTPResponse.Status, message: String, type: String, code: String? = nil, param: String? = nil) -> Response {
     let error = OpenAIErrorResponse(error: .init(message: message, type: type, param: param, code: code))
-    let body = jsonString(error)
-    var headers = HTTPFields()
-    headers[.contentType] = "application/json"
-    return Response(status: status, headers: headers, body: .init(byteBuffer: ByteBuffer(string: body)))
+    return jsonResponse(jsonString(error), status: status)
 }

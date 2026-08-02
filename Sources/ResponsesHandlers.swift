@@ -302,10 +302,8 @@ private func encodeEnvelope(
     estimatedTokens: Int
 ) -> (response: Response, trace: ChatRequestTrace) {
     let body = jsonString(envelope)
-    var headers = HTTPFields()
-    headers[.contentType] = "application/json"
     return (
-        Response(status: .ok, headers: headers, body: .init(byteBuffer: ByteBuffer(string: body))),
+        jsonResponse(body),
         ChatRequestTrace(
             stream: false,
             estimatedTokens: estimatedTokens,
@@ -331,10 +329,7 @@ private func responsesStreamingResponse(
     requestBody: String?,
     events: [String]
 ) -> (response: Response, trace: ChatRequestTrace) {
-    var headers = HTTPFields()
-    headers[.contentType] = "text/event-stream"
-    headers[.cacheControl] = "no-cache"
-    headers[.init("Connection")!] = "keep-alive"
+    let headers = eventStreamHeaders()
     let eventBox = TraceBuffer(events: events + ["responses stream start"])
     let cleanup = StreamCleanup()
     let taskBox = StreamTaskBox()

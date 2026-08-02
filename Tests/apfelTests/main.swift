@@ -112,6 +112,7 @@ suite("BufferedLineReaderConcurrencyTests") { runBufferedLineReaderConcurrencyTe
 suite("DebugFlagBaselineTests") { runDebugFlagBaselineTests() }
 suite("ApfelErrorMessageTests") { runApfelErrorMessageTests() }
 suite("OpenAIWireFormatTests") { runOpenAIWireFormatTests() }
+suite("SSEResponseHeadersTests") { runSSEResponseHeadersTests() }
 suite("ApfelCorePublicAPIUsageTests") { runApfelCorePublicAPIUsageTests() }
 suite("InstallMethodTests") { runInstallMethodTests() }
 suite("HomebrewPrefixTests") { runHomebrewPrefixTests() }
