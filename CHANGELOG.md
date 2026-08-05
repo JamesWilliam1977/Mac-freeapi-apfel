@@ -7,6 +7,8 @@ and this project adheres to [https://semver.org/](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.9.1] - 2026-08-05
+
 ### Changed
 
 - Bumped `github.com/hummingbird-project/hummingbird` from 2.25.1 to 2.26.0 (#382, Dependabot).
