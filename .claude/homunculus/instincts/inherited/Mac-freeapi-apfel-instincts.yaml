@@ -1,0 +1,577 @@
+# Instincts generated from https://github.com/JamesWilliam1977/Mac-freeapi-apfel
+# Generated: 2026-06-01T13:59:53.458Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: Mac-freeapi-apfel-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: fix, feat, docs, test, build
+
+## Evidence
+
+- 26 commits analyzed
+- Detected conventional commit pattern
+- Examples: test(tdd): add RED tests for all 14 open tickets (no implementation), fix(core): JSONFenceStripper.strip returns trimmed content when no fence present (#183)
+
+---
+id: Mac-freeapi-apfel-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Commit Length
+
+## Action
+
+Write moderate-length commit messages (~74 characters)
+
+## Evidence
+
+- Average commit message length: 74 chars
+- Based on 26 commits
+
+---
+id: Mac-freeapi-apfel-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Naming Files
+
+## Action
+
+Use PascalCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: PascalCase
+
+---
+id: Mac-freeapi-apfel-import-relative
+trigger: "when importing modules"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Import Relative
+
+## Action
+
+Use relative imports for project files
+
+## Evidence
+
+- Import analysis shows relative import pattern
+- Example: import { x } from '../lib/x'
+
+---
+id: Mac-freeapi-apfel-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Export Style
+
+## Action
+
+Prefer named exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: named
+
+---
+id: Mac-freeapi-apfel-test-separate
+trigger: "when writing tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Test Separate
+
+## Action
+
+Place tests in the tests/ or __tests__/ directory, mirroring src structure
+
+## Evidence
+
+- Separate test directory pattern detected
+- Tests live in dedicated test folders
+
+---
+id: Mac-freeapi-apfel-test-naming
+trigger: "when creating a test file"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Test Naming
+
+## Action
+
+Name test files using the pattern: *_test.py
+
+## Evidence
+
+- File pattern: *_test.py
+- Consistent across test files
+
+---
+id: Mac-freeapi-apfel-test-types
+trigger: "when planning tests for a feature"
+confidence: 0.7
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Test Types
+
+## Action
+
+Write unit, integration tests to match project standards
+
+## Evidence
+
+- Test types detected: unit, integration
+- Coverage config: no
+
+---
+id: Mac-freeapi-apfel-workflow-feature-development
+trigger: "when implementing a new feature"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Workflow Feature Development
+
+## Action
+
+Follow the feature-development workflow:
+1. Add feature implementation
+2. Add tests for feature
+3. Update documentation
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~12x per month
+- Files: **/*.test.*, **/api/**
+
+---
+id: Mac-freeapi-apfel-workflow-feature-development-tdd-red-green
+trigger: "when doing feature development tdd red green"
+confidence: 0.55
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Workflow Feature Development Tdd Red Green
+
+## Action
+
+Follow the feature-development-tdd-red-green workflow:
+1. Add failing (RED) unit/integration tests for each open ticket in test files (e.g., Tests/apfelTests/RedTDDTests.swift, Tests/integration/test_tdd_red.py).
+2. Commit only the tests, ensuring no source changes (tests fail).
+3. Implement the feature or bugfix in source files (e.g., Sources/Core/*.swift, Sources/CLI/*.swift, Sources/Handlers.swift, etc.).
+4. Update or add corresponding tests to cover the new/changed behavior.
+5. Commit the implementation and updated tests (tests now pass).
+6. Merge the feature branch (often as a squash or merge commit referencing all affected files).
+7. Release a new version (bump .version, update README.md, Sources/BuildInfo.swift).
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~1x per month
+- Files: Tests/apfelTests/RedTDDTests.swift, Tests/integration/test_tdd_red.py, Sources/Core/*.swift
+
+---
+id: Mac-freeapi-apfel-workflow-cli-flag-or-command-addition
+trigger: "when doing cli flag or command addition"
+confidence: 0.55
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Workflow Cli Flag Or Command Addition
+
+## Action
+
+Follow the cli-flag-or-command-addition workflow:
+1. Implement the new flag or subcommand in Sources/CLI.swift and/or Sources/CLI/CLIArguments.swift.
+2. Update or add parsing/validation logic in CLIArguments.
+3. Add or update unit tests in Tests/apfelTests/CLIArgumentsTests.swift.
+4. Update documentation: docs/cli-reference.md and man/apfel.1.in.
+5. Optionally, add integration tests for the new CLI surface.
+6. Commit all related changes together.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~1x per month
+- Files: Sources/CLI.swift, Sources/CLI/CLIArguments.swift, Tests/apfelTests/CLIArgumentsTests.swift
+
+---
+id: Mac-freeapi-apfel-workflow-documentation-and-release-update
+trigger: "when doing documentation and release update"
+confidence: 0.55
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Workflow Documentation And Release Update
+
+## Action
+
+Follow the documentation-and-release-update workflow:
+1. Update .version, README.md, and Sources/BuildInfo.swift for the new release.
+2. Update CLAUDE.md with current status (test counts, version).
+3. Update docs/cli-reference.md, docs/openai-api-compatibility.md, and man/apfel.1.in with new features/flags.
+4. Add or update feature-specific guides (e.g., docs/apfel-tag.md, docs/vscode-copilot.md).
+5. Commit all documentation and metadata changes.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~1x per month
+- Files: .version, README.md, Sources/BuildInfo.swift
+
+---
+id: Mac-freeapi-apfel-workflow-integration-test-suite-expansion
+trigger: "when doing integration test suite expansion"
+confidence: 0.55
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Workflow Integration Test Suite Expansion
+
+## Action
+
+Follow the integration-test-suite-expansion workflow:
+1. Write new integration test scripts in Tests/integration/*.py for the feature or CLI command.
+2. Include various input/output cases, including edge cases and error handling.
+3. Update README.md and/or feature-specific docs with usage examples and test coverage.
+4. Commit the new tests and documentation together.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~1x per month
+- Files: Tests/integration/*.py, README.md, docs/*.md
+
+---
+id: mac-freeapi-apfel-instinct-file-naming
+trigger: "When creating a new source or test file"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Instinct File Naming
+
+## Action
+
+Name the file using PascalCase (e.g., MyFile.swift)
+
+## Evidence
+
+- Pattern in Sources/Core/JSONFenceStripper.swift
+- Pattern in Tests/apfelTests/RedTDDTests.swift
+
+---
+id: mac-freeapi-apfel-instinct-function-naming
+trigger: "When defining a new function or method"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Instinct Function Naming
+
+## Action
+
+Use camelCase for function names (e.g., parseArguments)
+
+## Evidence
+
+- Pattern in Sources/Core/JSONFenceStripper.swift
+- Pattern in Sources/CLI/CLIArguments.swift
+
+---
+id: mac-freeapi-apfel-instinct-class-naming
+trigger: "When defining a new class or struct"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Instinct Class Naming
+
+## Action
+
+Use PascalCase for class and struct names (e.g., TokenCounter)
+
+## Evidence
+
+- Pattern in Sources/TokenCounter.swift
+- Pattern in Sources/Session.swift
+
+---
+id: mac-freeapi-apfel-instinct-constant-naming
+trigger: "When declaring a constant"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Instinct Constant Naming
+
+## Action
+
+Use SCREAMING_SNAKE_CASE for constant names (e.g., MAX_LENGTH)
+
+## Evidence
+
+- Pattern in Sources/Core/*.swift
+- Pattern in Sources/CLI/*.swift
+
+---
+id: mac-freeapi-apfel-instinct-import-style
+trigger: "When importing modules in Swift files"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Instinct Import Style
+
+## Action
+
+Use relative imports
+
+## Evidence
+
+- Pattern in Sources/Core/JSONFenceStripper.swift
+- Pattern in Sources/CLI/CLIArguments.swift
+
+---
+id: mac-freeapi-apfel-instinct-export-style
+trigger: "When exporting functions or classes"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Instinct Export Style
+
+## Action
+
+Use named exports
+
+## Evidence
+
+- Pattern in Sources/Core/*.swift
+- Pattern in Sources/CLI/*.swift
+
+---
+id: mac-freeapi-apfel-instinct-test-file-location
+trigger: "When adding new tests"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Instinct Test File Location
+
+## Action
+
+Place unit tests in Tests/apfelTests/ and integration tests in Tests/integration/
+
+## Evidence
+
+- Pattern in Tests/apfelTests/RedTDDTests.swift
+- Pattern in Tests/integration/test_tdd_red.py
+
+---
+id: mac-freeapi-apfel-instinct-test-file-naming
+trigger: "When naming a test file"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Instinct Test File Naming
+
+## Action
+
+Use PascalCase for Swift test files and *_test.py for Python integration tests
+
+## Evidence
+
+- Pattern in Tests/apfelTests/RedTDDTests.swift
+- Pattern in Tests/integration/test_tdd_red.py
+
+---
+id: mac-freeapi-apfel-instinct-tdd-red-green
+trigger: "When implementing a new feature or bugfix with full test coverage"
+confidence: 0.95
+domain: workflow
+source: repo-analysis
+source_repo: JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Instinct Tdd Red Green
+
+## Action
+
+First add failing (RED) tests, commit only tests, then implement the feature/fix, update tests, and commit passing (GREEN) tests and implementation together
+
+## Evidence
+
+- Workflow feature-development-tdd-red-green
+- Commits like test(tdd): add RED tests for all 14 open tickets (no implementation)
+
+---
+id: mac-freeapi-apfel-instinct-integration-test-expansion
+trigger: "When a new feature or CLI command needs end-to-end validation"
+confidence: 0.88
+domain: workflow
+source: repo-analysis
+source_repo: JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Instinct Integration Test Expansion
+
+## Action
+
+Add or expand integration test scripts in Tests/integration/*.py, covering edge cases and update docs with usage examples
+
+## Evidence
+
+- Workflow integration-test-suite-expansion
+- Pattern in Tests/integration/test_tdd_red.py
+
+---
+id: mac-freeapi-apfel-instinct-cli-flag-addition
+trigger: "When adding a new CLI flag or subcommand"
+confidence: 0.92
+domain: workflow
+source: repo-analysis
+source_repo: JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Instinct Cli Flag Addition
+
+## Action
+
+Implement in Sources/CLI.swift and/or Sources/CLI/CLIArguments.swift, update CLIArguments logic, add/update unit tests in Tests/apfelTests/CLIArgumentsTests.swift, update docs/cli-reference.md and man/apfel.1.in, and commit all together
+
+## Evidence
+
+- Workflow cli-flag-or-command-addition
+- Pattern in Sources/CLI/CLIArguments.swift
+
+---
+id: mac-freeapi-apfel-instinct-docs-release-update
+trigger: "When a new version is released or major features are added"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Instinct Docs Release Update
+
+## Action
+
+Update .version, README.md, Sources/BuildInfo.swift, CLAUDE.md, docs/cli-reference.md, docs/openai-api-compatibility.md, man/apfel.1.in, and feature-specific guides; commit all documentation and metadata changes
+
+## Evidence
+
+- Workflow documentation-and-release-update
+- Pattern in README.md, Sources/BuildInfo.swift, docs/cli-reference.md
+
+---
+id: mac-freeapi-apfel-instinct-git-commit-format
+trigger: "When writing a commit message"
+confidence: 0.9
+domain: git
+source: repo-analysis
+source_repo: JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Instinct Git Commit Format
+
+## Action
+
+Use conventional commits format: <type>(<scope>): <description> (e.g., fix(core): ... or feat(sampling): ...)
+
+## Evidence
+
+- Pattern in commit messages: fix(core): JSONFenceStripper.strip returns trimmed content when no fence present (#183)
+- feat(sampling): honor top_p (nucleus) and make temperature:0 deterministic via .greedy (#168)
+
+---
+id: mac-freeapi-apfel-instinct-git-commit-length
+trigger: "When writing a commit message"
+confidence: 0.8
+domain: git
+source: repo-analysis
+source_repo: JamesWilliam1977/Mac-freeapi-apfel
+---
+
+# Mac Freeapi Apfel Instinct Git Commit Length
+
+## Action
+
+Keep commit messages concise, around 74 characters on average
+
+## Evidence
+
+- Average commit message length: 74
+- Pattern in example commits
+
